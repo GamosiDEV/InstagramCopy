@@ -10,6 +10,6 @@ class CommentsModule extends Module {
 
   @override
   final List<ModularRoute> routes = [
-    ChildRoute('/', child: (_, args) => CommentsPage()),
+    ChildRoute(Modular.initialRoute, child: (_, args) => CommentsPage()),
   ];
 }

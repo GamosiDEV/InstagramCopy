@@ -147,13 +147,18 @@ class HomePageState extends State<HomePage> {
 
   void save() async {
     print("start");
+
     final Map<String, String> map = {"name": "Gabriel", "last-name": "Silva"};
-    await Firebase.initializeApp();
+
+
+
     await FirebaseFirestore.instance
         .collection("users")
         .add(map)
         .whenComplete(() {
       print("Completed");
     });
+
   }
+
 }

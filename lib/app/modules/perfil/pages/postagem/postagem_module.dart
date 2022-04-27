@@ -10,6 +10,6 @@ class PostagemModule extends Module {
 
   @override
   final List<ModularRoute> routes = [
-    ChildRoute('/', child: (_, args) => PostagemPage()),
+    ChildRoute(Modular.initialRoute, child: (_, args) => PostagemPage()),
   ];
 }

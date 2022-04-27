@@ -10,6 +10,6 @@ class PerfilModule extends Module {
 
   @override
   final List<ModularRoute> routes = [
-    ChildRoute('/', child: (_, args) => PerfilPage()),
+    ChildRoute(Modular.initialRoute, child: (_, args) => PerfilPage()),
   ];
 }
