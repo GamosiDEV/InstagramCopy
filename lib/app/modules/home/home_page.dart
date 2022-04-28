@@ -1,10 +1,10 @@
+import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:instagram_copy/app/modules/home/home_store.dart';
 import 'package:flutter/material.dart';
-
 
 class HomePage extends StatefulWidget {
   final String title;
@@ -24,12 +24,19 @@ class HomePageState extends State<HomePage> {
         appBar: AppBar(
           elevation: 0,
           title: Text(widget.title),
+          actions: <Widget>[
+            IconButton(
+              onPressed: close,
+              icon: const Icon(Icons.exit_to_app),
+            )
+          ],
         ),
         body: ListView.builder(
           itemCount: 20,
           itemBuilder: (BuildContext context, int index) {
             return GestureDetector(
               child: Card(
+                elevation: 0,
                 child: Column(
                   children: [
                     Container(
@@ -102,7 +109,6 @@ class HomePageState extends State<HomePage> {
                         Spacer(),
                         IconButton(
                           onPressed: () {
-                            print('Save');
                             save();
                           },
                           icon: const Icon(Icons.flag_outlined),
@@ -115,7 +121,8 @@ class HomePageState extends State<HomePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('XX curtidas'),
-                          Text('Nome ' + 'Descrição da Imagem com maximo de 2 linhas e um botão para exibir mais'),
+                          Text('Nome ' +
+                              'Descrição da Imagem com maximo de 2 linhas e um botão para exibir mais'),
                           Text('Ver Todos os Comentarios'),
                           Row(
                             children: [
@@ -145,20 +152,36 @@ class HomePageState extends State<HomePage> {
         ));
   }
 
+  Future<void> close() async {
+    await FirebaseAuth.instance.signOut().whenComplete(() {
+      Modular.to.navigate('/auth/');
+    });
+  }
+
   void save() async {
     print("start");
 
-    final Map<String, String> map = {"name": "Gabriel", "last-name": "Silva"};
+    final auth = FirebaseAuth.instance.currentUser;
+    String email = "";
+    String uid = "";
 
+    if(auth != null) {
+      if(auth.email != null)
+         email = auth.email.toString();
+      if(auth.getIdToken().toString() != null)
+        uid = await auth.uid;
 
+      final Map<String, String> map = {"name": "bala"
+        , "last-name": "123"
+        , "email": email
+        , "uid": uid};
 
-    await FirebaseFirestore.instance
-        .collection("users")
-        .add(map)
-        .whenComplete(() {
-      print("Completed");
-    });
-
+      await FirebaseFirestore.instance
+          .collection("users")
+          .add(map)
+          .whenComplete(() {
+        print(uid);
+      });
+    }
   }
-
 }

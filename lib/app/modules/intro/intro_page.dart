@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:instagram_copy/app/modules/intro/intro_store.dart';
@@ -20,7 +21,7 @@ class IntroPageState extends State<IntroPage> {
   @override
   Widget build(BuildContext context) {
     initializeFirebase();
-    Future.delayed(const Duration(milliseconds: 500), () {
+    Future.delayed(const Duration(milliseconds: 3000), () {
       setState(() {
         Modular.to.navigate('/auth/');
       });
@@ -32,6 +33,7 @@ class IntroPageState extends State<IntroPage> {
         width: double.infinity,
         alignment: Alignment.center,
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: const [
             Text(
               "Instacopy",
@@ -45,6 +47,7 @@ class IntroPageState extends State<IntroPage> {
       ),
     );
   }
+
 
   void initializeFirebase() async{
     await Firebase.initializeApp();
