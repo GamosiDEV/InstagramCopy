@@ -113,22 +113,31 @@ class SignInPageState extends State<SignInPage> {
   void cadastroFirebase(String _email, String _senha, String _username) async {
     final auth = FirebaseAuth.instance;
     try {
-       await auth.createUserWithEmailAndPassword(email: _email, password: _senha);
+      final user = (await auth.createUserWithEmailAndPassword(
+              email: _email, password: _senha))
+          .user;
+      if (user != null) {
+        user.updateDisplayName(_username);
+        Map<String, dynamic> map = {
+          "id": user.uid,
+          "email": user.email,
+          "username": user.displayName,
+          "signup-completed": false,
+        };
+        await FirebaseFirestore.instance.collection('users').add(map);
+        Modular.to.navigate('/home/');
+        //criar collection para o usuario cadastrado
+      }
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Senha muito fraca'))
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Senha muito fraca')));
       } else if (e.code == 'email-already-in-use') {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Este E-mail ja esta cadastrado'))
-        );
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Este E-mail ja esta cadastrado')));
       }
     } catch (e) {
-      print('catch'+e.toString());
-    } finally {
-      await auth.signInWithEmailAndPassword(email: _email, password: _senha).whenComplete(() => Modular.to.pop());
+      print('catch' + e.toString());
     }
-
-    }
+  }
 }

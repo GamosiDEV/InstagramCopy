@@ -23,9 +23,10 @@ class AuthPageState extends State<AuthPage> {
   @override
   void initState() {
     auth = FirebaseAuth.instance;
-    asLoged();
     // TODO: implement initState
     super.initState();
+
+
   }
 
 
@@ -35,7 +36,7 @@ class AuthPageState extends State<AuthPage> {
     TextEditingController senha = TextEditingController();
     GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-
+    asLoged();
 
     return Scaffold(
       body: Container(

@@ -1,4 +1,5 @@
 import 'package:flutter_modular/flutter_modular.dart';
+import 'package:instagram_copy/app/modules/profile/profile_module.dart';
 
 import 'modules/auth/auth_module.dart';
 import 'modules/home/home_module.dart';
@@ -13,9 +14,10 @@ class AppModule extends Module {
   @override
   final List<ModularRoute> routes = [//'/auth/sign_in'
     ModuleRoute(Modular.initialRoute, module: IntroModule()),
-    ModuleRoute('/home', module: HomeModule()),
-    ModuleRoute('/auth', module: AuthModule()),
-    ModuleRoute('/auth/sign_in', module: SignInModule()),
+    ModuleRoute('/home/', module: HomeModule()),
+    ModuleRoute('/auth/', module: AuthModule()),
+    ModuleRoute('/auth/sign_in/', module: SignInModule()),
+    ModuleRoute('/profile/', module: ProfileModule()),
   ];
 
 }

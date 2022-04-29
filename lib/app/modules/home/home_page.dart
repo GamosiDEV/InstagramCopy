@@ -17,9 +17,16 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   final HomeStore store = Modular.get();
+  final _auth = FirebaseAuth.instance;
+
+  @override
+  HomePageState() {
+    print("construtor");
+  }
 
   @override
   Widget build(BuildContext context) {
+    checkSignUpAsCompleted();
     return Scaffold(
         appBar: AppBar(
           elevation: 0,
@@ -108,9 +115,7 @@ class HomePageState extends State<HomePage> {
                         //icone para multiplas fotos fica por aqui
                         Spacer(),
                         IconButton(
-                          onPressed: () {
-                            save();
-                          },
+                          onPressed: null,
                           icon: const Icon(Icons.flag_outlined),
                         ),
                       ],
@@ -152,36 +157,22 @@ class HomePageState extends State<HomePage> {
         ));
   }
 
-  Future<void> close() async {
-    await FirebaseAuth.instance.signOut().whenComplete(() {
-      Modular.to.navigate('/auth/');
-    });
+  void checkSignUpAsCompleted() async {
+    await FirebaseFirestore.instance.collection("users").get().then(
+      (value) {
+        for (var v in value.docs) {
+          if (v.get('id') == _auth.currentUser?.uid) {
+            if(!v.get('signup-completed'))
+              Modular.to.navigate('/profile/'/*,'signup-uncomplete'*/);
+          }
+        }
+      },
+    );
   }
 
-  void save() async {
-    print("start");
-
-    final auth = FirebaseAuth.instance.currentUser;
-    String email = "";
-    String uid = "";
-
-    if(auth != null) {
-      if(auth.email != null)
-         email = auth.email.toString();
-      if(auth.getIdToken().toString() != null)
-        uid = await auth.uid;
-
-      final Map<String, String> map = {"name": "bala"
-        , "last-name": "123"
-        , "email": email
-        , "uid": uid};
-
-      await FirebaseFirestore.instance
-          .collection("users")
-          .add(map)
-          .whenComplete(() {
-        print(uid);
-      });
-    }
+  Future<void> close() async {
+    await _auth.signOut().whenComplete(() {
+      Modular.to.navigate('/auth/');
+    });
   }
 }
