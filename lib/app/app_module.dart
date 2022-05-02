@@ -1,6 +1,7 @@
 import 'package:flutter_modular/flutter_modular.dart';
-import 'package:instagram_copy/app/modules/profile/profile_module.dart';
 
+import 'modules/profile/profile_module.dart';
+import 'modules/profile/editor/editor_module.dart';
 import 'modules/auth/auth_module.dart';
 import 'modules/home/home_module.dart';
 import 'modules/auth/sign_in/signin_module.dart';
@@ -18,6 +19,7 @@ class AppModule extends Module {
     ModuleRoute('/auth/', module: AuthModule()),
     ModuleRoute('/auth/sign_in/', module: SignInModule()),
     ModuleRoute('/profile/', module: ProfileModule()),
+    ModuleRoute('/profile/editor/', module: EditorModule()),
   ];
 
 }

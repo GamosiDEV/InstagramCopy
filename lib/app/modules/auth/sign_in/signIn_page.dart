@@ -125,7 +125,6 @@ class SignInPageState extends State<SignInPage> {
         Map<String, dynamic> map = {
           "email": user.email,
           "username": _username,
-          "signup-completed": false,
         };
 
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set(map);
