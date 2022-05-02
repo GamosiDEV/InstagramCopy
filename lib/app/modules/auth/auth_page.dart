@@ -1,4 +1,3 @@
-
 import 'dart:ui';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -18,26 +17,23 @@ class AuthPage extends StatefulWidget {
 
 class AuthPageState extends State<AuthPage> {
   final AuthStore store = Modular.get();
-  late final FirebaseAuth auth ;
+  late final FirebaseAuth auth;
 
   @override
   void initState() {
     auth = FirebaseAuth.instance;
     // TODO: implement initState
     super.initState();
-
-
+    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
+      loginState();
+    });
   }
-
 
   @override
   Widget build(BuildContext context) {
     TextEditingController email = TextEditingController();
     TextEditingController senha = TextEditingController();
     GlobalKey<FormState> formKey = GlobalKey<FormState>();
-
-    asLoged();
-
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -86,10 +82,11 @@ class AuthPageState extends State<AuthPage> {
                 child: SizedBox(
                   height: 50,
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(primary: Colors.lightBlueAccent),
-                    onPressed: (){
-                      signInFirebase(email.text,senha.text);
-                  },
+                    style: ElevatedButton.styleFrom(
+                        primary: Colors.lightBlueAccent),
+                    onPressed: () {
+                      signInFirebase(email.text, senha.text);
+                    },
                     child: Text('Entrar'),
                   ),
                 ),
@@ -99,23 +96,35 @@ class AuthPageState extends State<AuthPage> {
                 child: RichText(
                   textAlign: TextAlign.center,
                   text: TextSpan(
-                    text: 'Clique',
-                    style: TextStyle(fontSize: 16,color: Colors.black),
-                    children: [
-                      TextSpan(
-                        text: ' aqui ',
-                        style: TextStyle(fontSize: 16,color: Colors.lightBlue),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                          Modular.to.pushNamed('/auth/sign_in/');
-                          }
-                      ),
-                      TextSpan(
+                      text: 'Clique',
+                      style: TextStyle(fontSize: 16, color: Colors.black),
+                      children: [
+                        TextSpan(
+                            text: ' aqui ',
+                            style: TextStyle(
+                                fontSize: 16, color: Colors.lightBlue),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                Modular.to.pushNamed('/auth/sign_in/');
+                              }),
+                        TextSpan(
                           text: 'para criar a sua conta agora',
-                          style: TextStyle(fontSize: 16,color: Colors.black),
-                      ),
-                    ]
-                  ),
+                          style: TextStyle(fontSize: 16, color: Colors.black),
+                        ),
+                      ]),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                      text: 'Tenho problemas em efetuar login',
+                      style: TextStyle(fontSize: 16, color: Colors.lightBlue),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () {
+                          print('tela de ajuda no login aqui');
+                        }),
                 ),
               )
             ],
@@ -125,43 +134,40 @@ class AuthPageState extends State<AuthPage> {
     );
   }
 
-  void asLoged() async{
-    if(await auth.currentUser != null){
-      Modular.to.navigate('/home/');
-    }
-  }
-
-  void signInFirebase(String _email, String _senha) async{
+  void signInFirebase(String _email, String _senha) async {
     try {
-       await auth.signInWithEmailAndPassword(
-          email: _email,
-          password: _senha
-      );
+      await auth.signInWithEmailAndPassword(email: _email, password: _senha);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
-        print('No user found for that email.');
+        snackBarGenerator('Email não possui conta');
       } else if (e.code == 'wrong-password') {
-        print('Wrong password provided for that user.');
+        snackBarGenerator('Senha Incorreta');
       }
     } finally {
       final user = auth.currentUser;
-      if(user != null) {
+      if (user != null) {
         final email = user.email;
-        print("logado :  " + email!);
       }
     }
-
-
-    await auth.authStateChanges()
-        .listen((User? user) {
-          if(user == null) {
-            print('User is currently signed out!');
-          }else{
-            print('User is signed in!');
-            Modular.to.navigate('/home/');
-          }
-    });
-
+    loginState();
   }
 
+  void loginState() async {
+    await auth.authStateChanges().listen((User? user) {
+      if (user == null) {
+        snackBarGenerator('Dados incorretos ou conta não registrada');
+      } else {
+        if (!user.emailVerified) {
+          snackBarGenerator("Seu email ainda não foi verificado");
+        } else {
+          Modular.to.navigate('/home/');
+        }
+      }
+    });
+  }
+
+  void snackBarGenerator(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
 }

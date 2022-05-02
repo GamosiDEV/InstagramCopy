@@ -20,13 +20,23 @@ class HomePageState extends State<HomePage> {
   final _auth = FirebaseAuth.instance;
 
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
+      checkSignUpAsCompleted();
+    });
+
+  }
+
+  @override
   HomePageState() {
     print("construtor");
   }
 
   @override
   Widget build(BuildContext context) {
-    checkSignUpAsCompleted();
+
     return Scaffold(
         appBar: AppBar(
           elevation: 0,
@@ -157,11 +167,15 @@ class HomePageState extends State<HomePage> {
         ));
   }
 
+
+
   void checkSignUpAsCompleted() async {
-    await FirebaseFirestore.instance.collection("users").get().then(
-      (value) {
+    await FirebaseFirestore.instance
+        .collection("users")
+        .get()
+        .then( (value) {
         for (var v in value.docs) {
-          if (v.get('id') == _auth.currentUser?.uid) {
+          if (v.id == _auth.currentUser?.uid) {
             if(!v.get('signup-completed'))
               Modular.to.navigate('/profile/'/*,'signup-uncomplete'*/);
           }

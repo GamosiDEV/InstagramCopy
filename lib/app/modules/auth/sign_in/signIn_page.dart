@@ -117,16 +117,20 @@ class SignInPageState extends State<SignInPage> {
               email: _email, password: _senha))
           .user;
       if (user != null) {
-        user.updateDisplayName(_username);
+        user.sendEmailVerification();
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Verificação de email enviada')));
+
         Map<String, dynamic> map = {
-          "id": user.uid,
           "email": user.email,
-          "username": user.displayName,
+          "username": _username,
           "signup-completed": false,
         };
-        await FirebaseFirestore.instance.collection('users').add(map);
-        Modular.to.navigate('/home/');
-        //criar collection para o usuario cadastrado
+
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set(map);
+        auth.signOut();
+        Modular.to.navigate('/auth/');
       }
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
