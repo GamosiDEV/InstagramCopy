@@ -1,3 +1,8 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_core/firebase_core.dart' as firebase_core;
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
@@ -113,9 +118,22 @@ class EditorPageState extends State<EditorPage> {
                         text: 'Alterar imagem de Perfil',
                         style: TextStyle(fontSize: 16, color: Colors.lightBlue),
                         recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            print(
-                                'Executar comandos para alterar foto de perfil');
+                          ..onTap = () async {
+                            final image = await FilePicker.platform.pickFiles(
+                              allowMultiple: false,
+                              type: FileType.custom,
+                              allowedExtensions: ['png', 'jpg'],
+                            );
+
+                            if(image == null) {
+                              print('Imagem não selecionada ');
+                              return null;
+                            }
+
+                            final path = image.files.single.path;
+                            final name = image.files.single.name;
+
+                            uploadProfileImage(path, name);
                           }),
                   ),
                 ),
@@ -241,5 +259,15 @@ class EditorPageState extends State<EditorPage> {
         .collection('users')
         .doc(_auth.currentUser?.uid)
         .set(map).whenComplete(() => Modular.to.pop());
+  }
+
+  void uploadProfileImage(final path, final name) async {
+    File file = File(path);
+
+    try{
+      await FirebaseStorage.instance.ref('users/id/').child('profile').putFile(file).then((p0) => print('done----------------'));
+    }on firebase_core.FirebaseException catch (e){
+
+    }
   }
 }

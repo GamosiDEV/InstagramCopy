@@ -44,6 +44,9 @@ dependencies:
   firebase_auth:
   build_runner: ^2.1.10
   mobx_codegen: ^2.0.6
+  firebase_storage: ^10.2.15
+  file_picker: ^4.5.1
+  # File picker eu não conheço pode ser de terceiros é interessante dar uma pesquisada melhor
 
 dev_dependencies:
   flutter_test:
