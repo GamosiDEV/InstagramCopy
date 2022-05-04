@@ -34,6 +34,7 @@ class EditorPageState extends State<EditorPage> {
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
   String profileImageReference = '';
   String profileImagePath = '';
+  String profileImageUrl = '';
 
   @override
   void initState() {
@@ -108,9 +109,10 @@ class EditorPageState extends State<EditorPage> {
                   child: ClipOval(
                     child: SizedBox.fromSize(
                         size: Size.fromRadius(48),
-                        child: profileImagePath == null || profileImagePath == ''
-                            ? getPlaceholder()
-                            : getProfileImageSelected()),
+                        child:
+                            profileImagePath == null || profileImagePath == ''
+                                ? getCurrentProfileImage()
+                                : getProfileImageSelected()),
                   ),
                 ),
                 Padding(
@@ -232,12 +234,23 @@ class EditorPageState extends State<EditorPage> {
         if (user['links'] != null) linksController.text = user['links'];
         if (user['birth-date'] != null)
           birthController.text = user['birth-date'];
-        if (user['profile-image-reference'] != null){
-          //show image from database
+        if (user['profile-image-reference'] != null) {
+          getUrlFromProfileImage(user['profile-image-reference'])
+              .then((value){
+                setState(() {
+                  profileImageUrl = value;
+                });
+              });
         }
         //set image with stored image
       });
     }
+  }
+
+  Future<String> getUrlFromProfileImage(String reference) async {
+    return await FirebaseStorage.instance
+        .ref(reference + 'profile')
+        .getDownloadURL();
   }
 
   void saveChanges() async {
@@ -259,7 +272,6 @@ class EditorPageState extends State<EditorPage> {
       uploadSelectedImage();
     }
 
-
     await FirebaseFirestore.instance
         .collection('users')
         .doc(_auth.currentUser?.uid)
@@ -269,12 +281,11 @@ class EditorPageState extends State<EditorPage> {
 
   void uploadSelectedImage() async {
     try {
-      await FirebaseStorage.instance.ref(profileImageReference)
+      await FirebaseStorage.instance
+          .ref(profileImageReference)
           .child('profile')
           .putFile(new File(profileImagePath));
-    } on firebase_core.FirebaseException catch (e) {
-
-    }
+    } on firebase_core.FirebaseException catch (e) {}
   }
 
   void setProfileImage(final path) {
@@ -283,14 +294,17 @@ class EditorPageState extends State<EditorPage> {
       String? userId = _auth.currentUser?.uid;
       profileImageReference = 'users/' + userId! + '/';
     });
-    // try {
-    //   await FirebaseStorage.instance.ref(profileImageReference)
-    //       .child('profile')
-    //       .putFile(profileImageFile)
-    //       .then((p0) => print('done----------------'));
-    // } on firebase_core.FirebaseException catch (e) {
-    //
-    // }
+  }
+
+  Widget getCurrentProfileImage() {
+    if (profileImageUrl != null && profileImageUrl != '') {
+      return Image.network(
+        profileImageUrl,
+        fit: BoxFit.cover,
+      );
+    } else {
+      return getPlaceholder();
+    }
   }
 
   Widget getPlaceholder() {

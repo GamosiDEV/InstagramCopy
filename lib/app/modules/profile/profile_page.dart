@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
@@ -24,6 +25,7 @@ class ProfilePageState extends State<ProfilePage> {
   String fullNameText = '';
   String bioText = '';
   String usernameText = '';
+  String profileImageUrl = '';
   final List<String> pages = <String>[
     '/home/',
     '/profile/',
@@ -33,9 +35,7 @@ class ProfilePageState extends State<ProfilePage> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
-
-    });
+    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {});
   }
 
   @override
@@ -69,10 +69,7 @@ class ProfilePageState extends State<ProfilePage> {
                       child: ClipOval(
                         child: SizedBox.fromSize(
                           size: Size.fromRadius(40),
-                          child: Image.network(
-                            'https://previews.123rf.com/images/happyvector071/happyvector0711904/happyvector071190414608/120957993-creative-illustration-of-default-avatar-profile-placeholder-isolated-on-background-art-design-grey-p.jpg',
-                            fit: BoxFit.cover,
-                          ),
+                          child: getCurrentProfileImage(),
                         ),
                       ),
                     ),
@@ -198,11 +195,36 @@ class ProfilePageState extends State<ProfilePage> {
         .doc(_auth.currentUser?.uid)
         .get()
         .then((value) {
-          setState(() {
-          fullNameText = value.get('fullname');
-          bioText = value.get('bio');
-          usernameText = value.get('username');
-          });
+      setState(() {
+        fullNameText = value.get('fullname');
+        bioText = value.get('bio');
+        usernameText = value.get('username');
+        getUrlFromProfileImage(value.get('profile-image-reference'));
+      });
     });
+  }
+
+  void getUrlFromProfileImage(String reference) async {
+    profileImageUrl = await FirebaseStorage.instance
+        .ref(reference + 'profile')
+        .getDownloadURL();
+  }
+
+  Widget getCurrentProfileImage() {
+    if (profileImageUrl != null && profileImageUrl != '') {
+      return Image.network(
+        profileImageUrl,
+        fit: BoxFit.cover,
+      );
+    } else {
+      return getPlaceholder();
+    }
+  }
+
+  Widget getPlaceholder() {
+    return Image.network(
+      'https://previews.123rf.com/images/happyvector071/happyvector0711904/happyvector071190414608/120957993-creative-illustration-of-default-avatar-profile-placeholder-isolated-on-background-art-design-grey-p.jpg',
+      fit: BoxFit.cover,
+    );
   }
 }
