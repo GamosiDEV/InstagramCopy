@@ -22,6 +22,7 @@ class EditorPage extends StatefulWidget {
 class EditorPageState extends State<EditorPage> {
   final EditorStore store = Modular.get();
   final _auth = FirebaseAuth.instance;
+
   //late final loggedUser;
 
   TextEditingController fullnameController = TextEditingController();
@@ -31,6 +32,8 @@ class EditorPageState extends State<EditorPage> {
   TextEditingController linksController = TextEditingController();
   TextEditingController birthController = TextEditingController();
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  String profileImageReference = '';
+  String profileImagePath = '';
 
   @override
   void initState() {
@@ -63,7 +66,9 @@ class EditorPageState extends State<EditorPage> {
                   child: const Text('Cancelar'),
                 ),
                 TextButton(
-                  onPressed: () => Navigator.pop(context, 'OK'),
+                  onPressed: () {
+                    Navigator.pop(context, 'OK');
+                  },
                   child: const Text('OK'),
                 )
               ],
@@ -102,12 +107,10 @@ class EditorPageState extends State<EditorPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: ClipOval(
                     child: SizedBox.fromSize(
-                      size: Size.fromRadius(48),
-                      child: Image.network(
-                        'https://previews.123rf.com/images/happyvector071/happyvector0711904/happyvector071190414608/120957993-creative-illustration-of-default-avatar-profile-placeholder-isolated-on-background-art-design-grey-p.jpg',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+                        size: Size.fromRadius(48),
+                        child: profileImagePath == null || profileImagePath == ''
+                            ? getPlaceholder()
+                            : getProfileImageSelected()),
                   ),
                 ),
                 Padding(
@@ -125,15 +128,12 @@ class EditorPageState extends State<EditorPage> {
                               allowedExtensions: ['png', 'jpg'],
                             );
 
-                            if(image == null) {
+                            if (image == null) {
                               print('Imagem não selecionada ');
                               return null;
                             }
 
-                            final path = image.files.single.path;
-                            final name = image.files.single.name;
-
-                            uploadProfileImage(path, name);
+                            setProfileImage(image.files.single.path);
                           }),
                   ),
                 ),
@@ -225,16 +225,16 @@ class EditorPageState extends State<EditorPage> {
     if (user != null) {
       setState(() {
         usernameController.text = user['username'];
-        if(user['fullname'] != null)
+        if (user['fullname'] != null)
           fullnameController.text = user['fullname'];
-        if(user['genere'] != null)
-          genereController.text = user['genere'];
-        if(user['bio'] != null)
-          bioController.text = user['bio'];
-        if(user['links'] != null)
-          linksController.text = user['links'];
-        if(user['birth-date'] != null)
+        if (user['genere'] != null) genereController.text = user['genere'];
+        if (user['bio'] != null) bioController.text = user['bio'];
+        if (user['links'] != null) linksController.text = user['links'];
+        if (user['birth-date'] != null)
           birthController.text = user['birth-date'];
+        if (user['profile-image-reference'] != null){
+          //show image from database
+        }
         //set image with stored image
       });
     }
@@ -244,30 +244,66 @@ class EditorPageState extends State<EditorPage> {
     Map<String, dynamic> map = {
       "username": usernameController.text,
     };
-    if(fullnameController.text != null && fullnameController.text != '')
+    if (fullnameController.text != null && fullnameController.text != '')
       map.addAll({'fullname': fullnameController.text});
-    if(genereController.text != null && genereController.text != '')
+    if (genereController.text != null && genereController.text != '')
       map.addAll({'genere': genereController.text});
-    if(bioController.text != null && bioController.text != '')
+    if (bioController.text != null && bioController.text != '')
       map.addAll({'bio': bioController.text});
-    if(linksController.text != null && linksController.text != '')
+    if (linksController.text != null && linksController.text != '')
       map.addAll({'links': linksController.text});
-    if(birthController.text != null && birthController.text != '')
+    if (birthController.text != null && birthController.text != '')
       map.addAll({'birth-date': birthController.text});
+    if (profileImageReference != null && profileImageReference != '') {
+      map.addAll({'profile-image-reference': profileImageReference});
+      uploadSelectedImage();
+    }
+
 
     await FirebaseFirestore.instance
         .collection('users')
         .doc(_auth.currentUser?.uid)
-        .set(map).whenComplete(() => Modular.to.pop());
+        .set(map)
+        .whenComplete(() => Modular.to.pop());
   }
 
-  void uploadProfileImage(final path, final name) async {
-    File file = File(path);
-
-    try{
-      await FirebaseStorage.instance.ref('users/id/').child('profile').putFile(file).then((p0) => print('done----------------'));
-    }on firebase_core.FirebaseException catch (e){
+  void uploadSelectedImage() async {
+    try {
+      await FirebaseStorage.instance.ref(profileImageReference)
+          .child('profile')
+          .putFile(new File(profileImagePath));
+    } on firebase_core.FirebaseException catch (e) {
 
     }
+  }
+
+  void setProfileImage(final path) {
+    setState(() {
+      profileImagePath = path;
+      String? userId = _auth.currentUser?.uid;
+      profileImageReference = 'users/' + userId! + '/';
+    });
+    // try {
+    //   await FirebaseStorage.instance.ref(profileImageReference)
+    //       .child('profile')
+    //       .putFile(profileImageFile)
+    //       .then((p0) => print('done----------------'));
+    // } on firebase_core.FirebaseException catch (e) {
+    //
+    // }
+  }
+
+  Widget getPlaceholder() {
+    return Image.network(
+      'https://previews.123rf.com/images/happyvector071/happyvector0711904/happyvector071190414608/120957993-creative-illustration-of-default-avatar-profile-placeholder-isolated-on-background-art-design-grey-p.jpg',
+      fit: BoxFit.cover,
+    );
+  }
+
+  Widget getProfileImageSelected() {
+    return Image.file(
+      new File(profileImagePath),
+      fit: BoxFit.cover,
+    );
   }
 }

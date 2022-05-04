@@ -21,9 +21,9 @@ class ProfilePageState extends State<ProfilePage> {
   int _currentIndex = 1;
   final ProfileStore store = Modular.get();
   final _auth = FirebaseAuth.instance;
-  late String fullNameText ;
-  late String bioText;
-  late String usernameText;
+  String fullNameText = '';
+  String bioText = '';
+  String usernameText = '';
   final List<String> pages = <String>[
     '/home/',
     '/profile/',
@@ -34,12 +34,13 @@ class ProfilePageState extends State<ProfilePage> {
     // TODO: implement initState
     super.initState();
     WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
-      getUserDataFromFirebase();
+
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    getUserDataFromFirebase();
     return Scaffold(
       appBar: AppBar(
         title: Text(usernameText),
@@ -197,9 +198,11 @@ class ProfilePageState extends State<ProfilePage> {
         .doc(_auth.currentUser?.uid)
         .get()
         .then((value) {
+          setState(() {
           fullNameText = value.get('fullname');
           bioText = value.get('bio');
           usernameText = value.get('username');
+          });
     });
   }
 }
