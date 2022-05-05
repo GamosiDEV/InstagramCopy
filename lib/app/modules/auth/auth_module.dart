@@ -11,6 +11,6 @@ class AuthModule extends Module {
 
   @override
   final List<ModularRoute> routes = [
-    ChildRoute(Modular.initialRoute, child: (_, args) => AuthPage()),
+    ChildRoute(Modular.initialRoute, child: (_, args) => AuthPage(firebase: args.data)),
   ];
 }
