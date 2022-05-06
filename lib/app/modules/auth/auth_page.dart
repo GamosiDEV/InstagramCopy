@@ -135,16 +135,14 @@ class AuthPageState extends State<AuthPage> {
     );
   }
 
-  void checkAsLoggedUser() {
-    widget.firebase.getLoggedUser().then((value) {
-      if (userAuthVerification(value)) {
-        if (value != null) {
-          AuthUserModel user = AuthUserModel(value.uid, value.email, value.emailVerified, value.displayName);
-          widget.firebase.setAuthUser(value);
+  void checkAsLoggedUser() async {
+      User? loggedUser = widget.firebase.getLoggedUser();
+      if (userAuthVerification(loggedUser)) {
+        if (loggedUser != null) {
+          widget.firebase.setAuthUser(loggedUser);
           loggedUserToHome();
         }
       }
-    });
   }
 
   void snackBarGenerator(String message) {
@@ -185,7 +183,6 @@ class AuthPageState extends State<AuthPage> {
 
   void loggedUserToHome() {
     widget.firebase.getCollectionOfLoggedUser();
-    widget.firebase.testeUserCollection();
     Modular.to.navigate('/home/',arguments: widget.firebase);
   }
 }
