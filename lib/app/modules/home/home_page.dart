@@ -8,8 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:instagram_copy/app/modules/shared/firebase_controller.dart';
 
 class HomePage extends StatefulWidget {
-  final String title;
   final FirebaseController firebase;
+  final String title;
+
 
   const HomePage({Key? key, this.title = 'Instacopy', required this.firebase})
       : super(key: key);
@@ -190,7 +191,7 @@ class HomePageState extends State<HomePage> {
 
   void screenChange() {
     Modular.to
-        .navigate(pages[_currentIndex]); //passar codigo da bottomNavigation
+        .navigate(pages[_currentIndex],arguments: widget.firebase); //passar codigo da bottomNavigation
   }
 
   Future<void> onClose() async {

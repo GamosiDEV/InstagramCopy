@@ -7,11 +7,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:instagram_copy/app/modules/profile/profile_store.dart';
+import 'package:instagram_copy/app/modules/shared/firebase_controller.dart';
 
 class ProfilePage extends StatefulWidget {
   final String title;
+  final FirebaseController firebase;
 
-  const ProfilePage({Key? key, this.title = '@username e botões'})
+  const ProfilePage({Key? key, this.title = '@username e botões', required this.firebase})
       : super(key: key);
 
   @override
@@ -21,7 +23,6 @@ class ProfilePage extends StatefulWidget {
 class ProfilePageState extends State<ProfilePage> {
   int _currentIndex = 1;
   final ProfileStore store = Modular.get();
-  final _auth = FirebaseAuth.instance;
   String fullNameText = '';
   String bioText = '';
   String usernameText = '';
@@ -35,23 +36,24 @@ class ProfilePageState extends State<ProfilePage> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {});
+    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
+      getLoggedUserData();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    getUserDataFromFirebase();
     return Scaffold(
       appBar: AppBar(
         title: Text(usernameText),
         actions: [
           IconButton(
             icon: Icon(Icons.add_box_rounded),
-            onPressed: null,
+            onPressed: null,//adicionar foto
           ),
           IconButton(
             icon: Icon(Icons.menu),
-            onPressed: null,
+            onPressed: null,//config
           ),
         ],
       ),
@@ -148,7 +150,7 @@ class ProfilePageState extends State<ProfilePage> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Modular.to.pushNamed('/profile/editor/');
+                    Modular.to.pushNamed('/profile/editor/',arguments: widget.firebase);
                   },
                   child: Text(
                     'Editar perfil',
@@ -186,28 +188,50 @@ class ProfilePageState extends State<ProfilePage> {
 
   void screenChange() {
     Modular.to
-        .navigate(pages[_currentIndex]); //passar codigo da bottomNavigation
+        .navigate(pages[_currentIndex],arguments: widget.firebase); //passar codigo da bottomNavigation
   }
 
-  void getUserDataFromFirebase() async {
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(_auth.currentUser?.uid)
-        .get()
-        .then((value) {
-      setState(() {
-        fullNameText = value.get('fullname');
-        bioText = value.get('bio');
-        usernameText = value.get('username');
-        getUrlFromProfileImage(value.get('profile-image-reference'));
-      });
+  void getLoggedUserData(){
+    Map<String, dynamic>? userData = widget.firebase.getLoggedUserCollection();
+    if(userData != null){
+      setDataFromLoggedUser(userData);
+    }
+  }
+
+  void setDataFromLoggedUser(Map userData){
+    setState(() {
+      fullNameText = userData['fullname'];
+      bioText = userData['bio'];
+      usernameText = userData['username'];
+      print('===================================');
+      print(userData['profile-image-reference']);
+      getUrlFromProfileImage(userData['profile-image-reference']);
     });
   }
 
+  // void getUserDataFromFirebase() async {
+  //   await FirebaseFirestore.instance
+  //       .collection('users')
+  //       .doc(_auth.currentUser?.uid)
+  //       .get()
+  //       .then((value) {
+  //     setState(() {
+  //       fullNameText = value.get('fullname');
+  //       bioText = value.get('bio');
+  //       usernameText = value.get('username');
+  //       getUrlFromProfileImage(value.get('profile-image-reference'));
+  //     });
+  //   });
+  // }
+
   void getUrlFromProfileImage(String reference) async {
-    profileImageUrl = await FirebaseStorage.instance
+    await FirebaseStorage.instance
         .ref(reference + 'profile')
-        .getDownloadURL();
+        .getDownloadURL().then((value){
+          setState(() {
+            profileImageUrl = value;
+          });
+    });
   }
 
   Widget getCurrentProfileImage() {

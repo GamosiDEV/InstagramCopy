@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -23,6 +25,10 @@ class FirebaseController {
     return _authUser;
   }
 
+  Map<String, dynamic>? getLoggedUserCollection(){
+    return _userCollection;
+  }
+
   void getCollectionOfLoggedUser() async {
     await _firestore
         .collection('users')
@@ -31,6 +37,17 @@ class FirebaseController {
         .then((value) {
       _userCollection = value.data()!;
     });
+  }
+
+  Future<void> setCollectionOfLoggedUser(Map<String,dynamic> userCollection) async {
+    await _firestore.collection('users')
+        .doc(_auth.currentUser?.uid).set(userCollection);
+  }
+
+  Future<void> updateProfileImage(String reference, String path) async {
+    await _storage.ref(reference)
+        .child('profile')
+        .putFile(File(path));
   }
 
   User? getLoggedUser() {

@@ -9,11 +9,15 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:instagram_copy/app/modules/profile/editor/editor_store.dart';
 import 'package:flutter/material.dart';
+import 'package:instagram_copy/app/modules/shared/firebase_controller.dart';
 
 class EditorPage extends StatefulWidget {
   final String title;
+  final FirebaseController firebase;
 
-  const EditorPage({Key? key, this.title = 'EditorPage'}) : super(key: key);
+  const EditorPage(
+      {Key? key, this.title = 'EditorPage', required this.firebase})
+      : super(key: key);
 
   @override
   EditorPageState createState() => EditorPageState();
@@ -21,7 +25,8 @@ class EditorPage extends StatefulWidget {
 
 class EditorPageState extends State<EditorPage> {
   final EditorStore store = Modular.get();
-  final _auth = FirebaseAuth.instance;
+
+  //final _auth = FirebaseAuth.instance;
 
   //late final loggedUser;
 
@@ -63,12 +68,12 @@ class EditorPageState extends State<EditorPage> {
                   'As alterações feitas em seu perfil não seram salvas, deseja realmente sair ?'),
               actions: <Widget>[
                 TextButton(
-                  onPressed: () => Navigator.pop(context, 'Cancel'),
+                  onPressed: () => Modular.to.pop(),
                   child: const Text('Cancelar'),
                 ),
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context, 'OK');
+                    Modular.to.pop();
                   },
                   child: const Text('OK'),
                 )
@@ -210,17 +215,19 @@ class EditorPageState extends State<EditorPage> {
   }
 
   void getLoggedUser() {
-    _auth.authStateChanges().listen((user) async {
-      if (user != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get()
-            .then((value) {
-          setFieldsWithLoggedUser(value.data());
-        });
-      }
-    });
+    //update logged user info
+    setFieldsWithLoggedUser(widget.firebase.getLoggedUserCollection());
+    // _auth.authStateChanges().listen((user) async {
+    //   if (user != null) {
+    //     await FirebaseFirestore.instance
+    //         .collection('users')
+    //         .doc(user.uid)
+    //         .get()
+    //         .then((value) {
+    //       setFieldsWithLoggedUser(value.data());
+    //     });
+    //   }
+    // });
   }
 
   void setFieldsWithLoggedUser(Map? user) {
@@ -235,14 +242,12 @@ class EditorPageState extends State<EditorPage> {
         if (user['birth-date'] != null)
           birthController.text = user['birth-date'];
         if (user['profile-image-reference'] != null) {
-          getUrlFromProfileImage(user['profile-image-reference'])
-              .then((value){
-                setState(() {
-                  profileImageUrl = value;
-                });
-              });
+          getUrlFromProfileImage(user['profile-image-reference']).then((value) {
+            setState(() {
+              profileImageUrl = value;
+            });
+          });
         }
-        //set image with stored image
       });
     }
   }
@@ -254,44 +259,40 @@ class EditorPageState extends State<EditorPage> {
   }
 
   void saveChanges() async {
-    Map<String, dynamic> map = {
+    Map<String, dynamic> updatedUserData = {
       "username": usernameController.text,
     };
     if (fullnameController.text != null && fullnameController.text != '')
-      map.addAll({'fullname': fullnameController.text});
+      updatedUserData.addAll({'fullname': fullnameController.text});
     if (genereController.text != null && genereController.text != '')
-      map.addAll({'genere': genereController.text});
+      updatedUserData.addAll({'genere': genereController.text});
     if (bioController.text != null && bioController.text != '')
-      map.addAll({'bio': bioController.text});
+      updatedUserData.addAll({'bio': bioController.text});
     if (linksController.text != null && linksController.text != '')
-      map.addAll({'links': linksController.text});
+      updatedUserData.addAll({'links': linksController.text});
     if (birthController.text != null && birthController.text != '')
-      map.addAll({'birth-date': birthController.text});
+      updatedUserData.addAll({'birth-date': birthController.text});
     if (profileImageReference != null && profileImageReference != '') {
-      map.addAll({'profile-image-reference': profileImageReference});
+      updatedUserData
+          .addAll({'profile-image-reference': profileImageReference});
       uploadSelectedImage();
     }
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(_auth.currentUser?.uid)
-        .set(map)
-        .whenComplete(() => Modular.to.pop());
+    widget.firebase.setCollectionOfLoggedUser(updatedUserData);
+    Modular.to.pop();
   }
 
   void uploadSelectedImage() async {
     try {
-      await FirebaseStorage.instance
-          .ref(profileImageReference)
-          .child('profile')
-          .putFile(new File(profileImagePath));
+      widget.firebase
+          .updateProfileImage(profileImageReference, profileImagePath);
     } on firebase_core.FirebaseException catch (e) {}
   }
 
   void setProfileImage(final path) {
     setState(() {
       profileImagePath = path;
-      String? userId = _auth.currentUser?.uid;
+      String? userId = widget.firebase.getLoggedUser()?.uid;
       profileImageReference = 'users/' + userId! + '/';
     });
   }
