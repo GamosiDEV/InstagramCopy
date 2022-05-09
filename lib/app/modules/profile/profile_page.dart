@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
+import 'package:instagram_copy/app/app_widget.dart';
 import 'package:instagram_copy/app/modules/profile/profile_store.dart';
 import 'package:instagram_copy/app/modules/shared/firebase_controller.dart';
 
@@ -13,7 +14,8 @@ class ProfilePage extends StatefulWidget {
   final String title;
   final FirebaseController firebase;
 
-  const ProfilePage({Key? key, this.title = '@username e botões', required this.firebase})
+  const ProfilePage(
+      {Key? key, this.title = '@username e botões', required this.firebase})
       : super(key: key);
 
   @override
@@ -37,7 +39,7 @@ class ProfilePageState extends State<ProfilePage> {
     // TODO: implement initState
     super.initState();
     WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
-      getLoggedUserData();
+      setUsername(widget.firebase.getLoggedUser()?.displayName);
     });
   }
 
@@ -49,117 +51,34 @@ class ProfilePageState extends State<ProfilePage> {
         actions: [
           IconButton(
             icon: Icon(Icons.add_box_rounded),
-            onPressed: null,//adicionar foto
+            onPressed: null, //adicionar foto
           ),
           IconButton(
             icon: Icon(Icons.menu),
-            onPressed: null,//config
+            onPressed: null, //config
           ),
         ],
       ),
       body: Container(
         height: double.infinity,
         width: double.infinity,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(16.0, 8.0, 8.0, 4.0),
-                    child: Container(
-                      child: ClipOval(
-                        child: SizedBox.fromSize(
-                          size: Size.fromRadius(40),
-                          child: getCurrentProfileImage(),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Spacer(),
-                  Container(
-                    padding: EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          '10',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 18),
-                        ),
-                        const Text('Publicações')
-                      ],
-                    ),
-                  ),
-                  Spacer(),
-                  Container(
-                    padding: EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          '280',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 18),
-                        ),
-                        const Text('Seguidores')
-                      ],
-                    ),
-                  ),
-                  Spacer(),
-                  Container(
-                    padding: EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          '780',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 18),
-                        ),
-                        const Text('Seguindo')
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Text(
-                      fullNameText,
-                      textAlign: TextAlign.start,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      bioText,
-                      style: TextStyle(fontSize: 16),
-                    )
-                  ],
+        child: FutureBuilder(
+          future: reloadDataFromLoggedUser(),
+          builder: (context, snapshot) {
+            if (snapshot == null) {
+              return Container(
+                width: 200.0,
+                height: 200.0,
+                alignment: Alignment.center,
+                child: const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                  strokeWidth: 5.0,
                 ),
-              ),
-              Container(
-                padding: EdgeInsets.all(8.0),
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Modular.to.pushNamed('/profile/editor/',arguments: widget.firebase);
-                  },
-                  child: Text(
-                    'Editar perfil',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              )
-            ],
-          ),
+              );
+            } else {
+              return createProfileScreen(context, snapshot);
+            }
+          },
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -179,6 +98,126 @@ class ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget createProfileScreen(BuildContext context, AsyncSnapshot snapshot) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(16.0, 8.0, 8.0, 4.0),
+                child: Container(
+                  child: ClipOval(
+                    child: SizedBox.fromSize(
+                      size: Size.fromRadius(40),
+                      child: getCurrentProfileImage(),
+                    ),
+                  ),
+                ),
+              ),
+              Spacer(),
+              Container(
+                padding: EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      '10',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    const Text('Publicações')
+                  ],
+                ),
+              ),
+              Spacer(),
+              Container(
+                padding: EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      '280',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    const Text('Seguidores')
+                  ],
+                ),
+              ),
+              Spacer(),
+              Container(
+                padding: EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      '780',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    const Text('Seguindo')
+                  ],
+                ),
+              ),
+            ],
+          ),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  snapshot.data['fullname'],
+                  textAlign: TextAlign.start,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  snapshot.data['bio'],
+                  style: TextStyle(fontSize: 16),
+                )
+              ],
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.all(8.0),
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                Modular.to
+                    .pushNamed('/profile/editor/', arguments: widget.firebase);
+              },
+              child: Text(
+                'Editar perfil',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          )
+          //Abas para minhas fotos postadas e meus marcados
+          //grid para mostrar as fotos
+        ],
+      ),
+    );
+  }
+
+  void setUsername(String? name) {
+    if (name != null) {
+      setState(() {
+        usernameText = name;
+      });
+    }
+  }
+
+  Future<Map?> reloadDataFromLoggedUser() async {
+    await widget.firebase.getCollectionOfLoggedUser();
+    return widget.firebase.getLoggedUserCollection();
+  }
+
   void onBottomNavigationBarItemTapped(int index) {
     setState(() {
       _currentIndex = index;
@@ -187,57 +226,15 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   void screenChange() {
-    Modular.to
-        .navigate(pages[_currentIndex],arguments: widget.firebase); //passar codigo da bottomNavigation
-  }
-
-  void getLoggedUserData(){
-    Map<String, dynamic>? userData = widget.firebase.getLoggedUserCollection();
-    if(userData != null){
-      setDataFromLoggedUser(userData);
-    }
-  }
-
-  void setDataFromLoggedUser(Map userData){
-    setState(() {
-      fullNameText = userData['fullname'];
-      bioText = userData['bio'];
-      usernameText = userData['username'];
-      print('===================================');
-      print(userData['profile-image-reference']);
-      getUrlFromProfileImage(userData['profile-image-reference']);
-    });
-  }
-
-  // void getUserDataFromFirebase() async {
-  //   await FirebaseFirestore.instance
-  //       .collection('users')
-  //       .doc(_auth.currentUser?.uid)
-  //       .get()
-  //       .then((value) {
-  //     setState(() {
-  //       fullNameText = value.get('fullname');
-  //       bioText = value.get('bio');
-  //       usernameText = value.get('username');
-  //       getUrlFromProfileImage(value.get('profile-image-reference'));
-  //     });
-  //   });
-  // }
-
-  void getUrlFromProfileImage(String reference) async {
-    await FirebaseStorage.instance
-        .ref(reference + 'profile')
-        .getDownloadURL().then((value){
-          setState(() {
-            profileImageUrl = value;
-          });
-    });
+    Modular.to.navigate(pages[_currentIndex],
+        arguments: widget.firebase); //passar codigo da bottomNavigation
   }
 
   Widget getCurrentProfileImage() {
-    if (profileImageUrl != null && profileImageUrl != '') {
+    String? url = widget.firebase.getProfileImageUrl();
+    if (url != null && url != '') {
       return Image.network(
-        profileImageUrl,
+        url,
         fit: BoxFit.cover,
       );
     } else {
