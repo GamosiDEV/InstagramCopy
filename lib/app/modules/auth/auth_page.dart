@@ -175,8 +175,6 @@ class AuthPageState extends State<AuthPage> {
       } else {
         snackBarGenerator('Seu email ainda não foi verificado');
       }
-    } else {
-      snackBarGenerator('Dados incorretos');
     }
     return false;
   }

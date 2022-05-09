@@ -33,18 +33,32 @@ class FirebaseController {
     });
   }
 
-  User? getLoggedUser()  {
+  User? getLoggedUser() {
     return _auth.currentUser;
   }
 
-  // void testeUserCollection() {
-  //   print("||||||||||");
-  //   _userCollection?.forEach((key, value) {
-  //     print(key.toString() + ': ' + value.toString());
-  //   });
-  //   print(_authUser?.uid);
-  //   print(_authUser?.email);
-  //   print(_authUser?.emailVerified);
-  //   print("||||||||||");
-  // }
+  Future<bool> signOut() async {
+    await _auth.signOut();
+    if (_auth.currentUser == null) {
+      clearLoggedUserData();
+      return false;
+    }
+    return true;
+  }
+
+  void clearLoggedUserData(){
+    _authUser = null;
+    _userCollection = null;
+  }
+
+// void testeUserCollection() {
+//   print("||||||||||");
+//   _userCollection?.forEach((key, value) {
+//     print(key.toString() + ': ' + value.toString());
+//   });
+//   print(_authUser?.uid);
+//   print(_authUser?.email);
+//   print(_authUser?.emailVerified);
+//   print("||||||||||");
+// }
 }
