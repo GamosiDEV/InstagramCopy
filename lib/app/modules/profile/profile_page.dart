@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:instagram_copy/app/app_widget.dart';
 import 'package:instagram_copy/app/modules/profile/profile_store.dart';
 import 'package:instagram_copy/app/modules/shared/firebase_controller.dart';
+import 'dart:math' as math;
 
 class ProfilePage extends StatefulWidget {
   final String title;
@@ -29,6 +31,7 @@ class ProfilePageState extends State<ProfilePage> {
   String bioText = '';
   String usernameText = '';
   String profileImageUrl = '';
+  int indexOfSelectedTab = 1;
   final List<String> pages = <String>[
     '/home/',
     '/profile/',
@@ -60,27 +63,60 @@ class ProfilePageState extends State<ProfilePage> {
         ],
       ),
       body: Container(
-        height: double.infinity,
-        width: double.infinity,
-        child: FutureBuilder(
-          future: reloadDataFromLoggedUser(),
-          builder: (context, snapshot) {
-            if (snapshot == null) {
-              return Container(
-                width: 200.0,
-                height: 200.0,
-                alignment: Alignment.center,
-                child: const CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
-                  strokeWidth: 5.0,
+          height: double.infinity,
+          width: double.infinity,
+          child: DefaultTabController(
+            length: 2,
+            child: NestedScrollView(
+              headerSliverBuilder: (context, _) {
+                return [
+                  SliverList(
+                    delegate: SliverChildListDelegate(
+                      profilePageUpperSide(context),
+                    ),
+                  ),
+                ];
+              },
+              body: Expanded(
+                child: Column(
+                  children: [
+                    TabBar(
+                      tabs: [
+                        Tab(
+                            icon: Icon(
+                          Icons.grid_on,
+                          color: Colors.grey,
+                        )),
+                        Tab(icon: Icon(Icons.save, color: Colors.grey)),
+                      ],
+                    ),
+                    Expanded(
+                      child: FutureBuilder(
+                        future: null,
+                        builder: (context, snapshot) {
+                          return generatePhotoGrid(context, snapshot);
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            } else {
-              return createProfileScreen(context, snapshot);
-            }
-          },
-        ),
-      ),
+              ),
+            ),
+
+            // child: Builder(
+            //   builder: (BuildContext context) {
+            //     final TabController tabController =
+            //     DefaultTabController.of(context)!;
+            //     tabController.addListener(() {
+            //       if (!tabController.indexIsChanging) {
+            //         setState(() {
+            //           indexOfSelectedTab = tabController.index;
+            //         });
+            //       }
+            //     });
+            //   },
+            // ),
+          )),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -96,6 +132,29 @@ class ProfilePageState extends State<ProfilePage> {
         onTap: onBottomNavigationBarItemTapped,
       ),
     );
+  }
+
+  List<Widget> profilePageUpperSide(BuildContext context) {
+    return [
+      FutureBuilder(
+        future: reloadDataFromLoggedUser(),
+        builder: (context, snapshot) {
+          if (snapshot == null) {
+            return Container(
+              width: 200.0,
+              height: 200.0,
+              alignment: Alignment.center,
+              child: const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                strokeWidth: 5.0,
+              ),
+            );
+          } else {
+            return createProfileScreen(context, snapshot);
+          }
+        },
+      ),
+    ];
   }
 
   Widget createProfileScreen(BuildContext context, AsyncSnapshot snapshot) {
@@ -197,11 +256,50 @@ class ProfilePageState extends State<ProfilePage> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
-          )
+          ),
           //Abas para minhas fotos postadas e meus marcados
           //grid para mostrar as fotos
         ],
       ),
+    );
+  }
+
+  Widget generatePhotoGrid(BuildContext context, AsyncSnapshot snapshot) {
+    return TabBarView(
+      children: [
+        GridView.builder(
+          padding: EdgeInsets.zero,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3, crossAxisSpacing: 2.0, mainAxisSpacing: 2.0),
+          itemCount: 20,
+          itemBuilder: (context, index) {
+            return SizedBox(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                    color:
+                        Color((math.Random().nextDouble() * 0xFFFFFF).toInt())
+                            .withOpacity(1.0)),
+              ),
+            );
+          },
+        ),
+        GridView.builder(
+          padding: EdgeInsets.zero,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3, crossAxisSpacing: 2.0, mainAxisSpacing: 2.0),
+          itemCount: 7,
+          itemBuilder: (context, index) {
+            return SizedBox(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                    color:
+                        Color((math.Random().nextDouble() * 0xFFFFFF).toInt())
+                            .withOpacity(1.0)),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
