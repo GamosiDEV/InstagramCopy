@@ -26,7 +26,7 @@ class FirebaseController {
     return _authUser;
   }
 
-  Map<String, dynamic>? getLoggedUserCollection(){
+  Map<String, dynamic>? getLoggedUserCollection() {
     return _userCollection;
   }
 
@@ -45,23 +45,24 @@ class FirebaseController {
     });
   }
 
-  Future<void> setCollectionOfLoggedUser(Map<String,dynamic> userCollection) async {
-    await _firestore.collection('users')
-        .doc(_auth.currentUser?.uid).set(userCollection);
+  Future<void> setCollectionOfLoggedUser(
+      Map<String, dynamic> userCollection) async {
+    await _firestore
+        .collection('users')
+        .doc(_auth.currentUser?.uid)
+        .set(userCollection);
   }
 
   Future<void> updateProfileImage(String reference, String path) async {
-    await _storage.ref(reference)
-        .child('profile')
-        .putFile(File(path));
+    await _storage.ref(reference).child('profile').putFile(File(path));
   }
 
   String? getProfileImageUrl() {
     return profileImageUrl;
   }
 
-  void setProfileImageUrl(String ref) async{
-    await _storage.ref(ref+'profile').getDownloadURL().then((value){
+  void setProfileImageUrl(String ref) async {
+    await _storage.ref(ref + 'profile').getDownloadURL().then((value) {
       profileImageUrl = value;
     });
   }
@@ -79,7 +80,7 @@ class FirebaseController {
     return true;
   }
 
-  void clearLoggedUserData(){
+  void clearLoggedUserData() {
     _authUser = null;
     _userCollection = null;
   }
