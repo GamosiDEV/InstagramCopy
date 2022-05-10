@@ -36,13 +36,18 @@ class ProfilePageState extends State<ProfilePage> {
     '/home/',
     '/profile/',
   ];
+  late Future<Map?> _dataFromLoggedUser ;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+
     WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
-      setUsername(widget.firebase.getLoggedUser()?.displayName);
+      setUsername(widget.firebase
+          .getLoggedUser()
+          ?.displayName);
+      _dataFromLoggedUser = reloadDataFromLoggedUser();
     });
   }
 
@@ -63,60 +68,56 @@ class ProfilePageState extends State<ProfilePage> {
         ],
       ),
       body: Container(
-          height: double.infinity,
-          width: double.infinity,
-          child: DefaultTabController(
-            length: 2,
-            child: NestedScrollView(
-              headerSliverBuilder: (context, _) {
-                return [
-                  SliverList(
-                    delegate: SliverChildListDelegate(
-                      profilePageUpperSide(context),
-                    ),
-                  ),
-                ];
-              },
-              body: Expanded(
-                child: Column(
-                  children: [
-                    TabBar(
-                      tabs: [
-                        Tab(
-                            icon: Icon(
-                          Icons.grid_on,
-                          color: Colors.grey,
-                        )),
-                        Tab(icon: Icon(Icons.save, color: Colors.grey)),
+        height: double.infinity,
+        width: double.infinity,
+        child: FutureBuilder(
+          future: reloadDataFromLoggedUser(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return DefaultTabController(
+                length: 2,
+                child: NestedScrollView(
+                  headerSliverBuilder: (context, _) {
+                    return [
+                      SliverList(
+                        delegate: SliverChildListDelegate(
+                          profilePageUpperSide(context, snapshot),
+                        ),
+                      ),
+                    ];
+                  },
+                  body: Column(
+                      children: [
+                        TabBar(
+                          tabs: [
+                            Tab(
+                                icon: Icon(
+                                  Icons.grid_on,
+                                  color: Colors.grey,
+                                )),
+                            Tab(icon: Icon(Icons.save, color: Colors.grey)),
+                          ],
+                        ),
+                        Expanded(
+                            child: generateTabBarView(context, snapshot)
+                        ),
                       ],
                     ),
-                    Expanded(
-                      child: FutureBuilder(
-                        future: null,
-                        builder: (context, snapshot) {
-                          return generatePhotoGrid(context, snapshot);
-                        },
-                      ),
-                    ),
-                  ],
                 ),
+              );
+            }
+            return Container(
+              width: 200.0,
+              height: 200.0,
+              alignment: Alignment.center,
+              child: const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                strokeWidth: 5.0,
               ),
-            ),
-
-            // child: Builder(
-            //   builder: (BuildContext context) {
-            //     final TabController tabController =
-            //     DefaultTabController.of(context)!;
-            //     tabController.addListener(() {
-            //       if (!tabController.indexIsChanging) {
-            //         setState(() {
-            //           indexOfSelectedTab = tabController.index;
-            //         });
-            //       }
-            //     });
-            //   },
-            // ),
-          )),
+            );
+          },
+        ),
+      ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -134,27 +135,8 @@ class ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  List<Widget> profilePageUpperSide(BuildContext context) {
-    return [
-      FutureBuilder(
-        future: reloadDataFromLoggedUser(),
-        builder: (context, snapshot) {
-          if (snapshot == null) {
-            return Container(
-              width: 200.0,
-              height: 200.0,
-              alignment: Alignment.center,
-              child: const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
-                strokeWidth: 5.0,
-              ),
-            );
-          } else {
-            return createProfileScreen(context, snapshot);
-          }
-        },
-      ),
-    ];
+  List<Widget> profilePageUpperSide(BuildContext context, snapshot) {
+    return [createProfileScreen(context, snapshot)];
   }
 
   Widget createProfileScreen(BuildContext context, AsyncSnapshot snapshot) {
@@ -183,7 +165,7 @@ class ProfilePageState extends State<ProfilePage> {
                     Text(
                       '10',
                       style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                     const Text('Publicações')
                   ],
@@ -198,7 +180,7 @@ class ProfilePageState extends State<ProfilePage> {
                     Text(
                       '280',
                       style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                     const Text('Seguidores')
                   ],
@@ -213,7 +195,7 @@ class ProfilePageState extends State<ProfilePage> {
                     Text(
                       '780',
                       style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                     const Text('Seguindo')
                   ],
@@ -264,7 +246,7 @@ class ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget generatePhotoGrid(BuildContext context, AsyncSnapshot snapshot) {
+  Widget generateTabBarView(BuildContext context, AsyncSnapshot snapshot) {
     return TabBarView(
       children: [
         GridView.builder(
@@ -277,8 +259,8 @@ class ProfilePageState extends State<ProfilePage> {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                     color:
-                        Color((math.Random().nextDouble() * 0xFFFFFF).toInt())
-                            .withOpacity(1.0)),
+                    Color((math.Random().nextDouble() * 0xFFFFFF).toInt())
+                        .withOpacity(1.0)),
               ),
             );
           },
@@ -293,8 +275,8 @@ class ProfilePageState extends State<ProfilePage> {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                     color:
-                        Color((math.Random().nextDouble() * 0xFFFFFF).toInt())
-                            .withOpacity(1.0)),
+                    Color((math.Random().nextDouble() * 0xFFFFFF).toInt())
+                        .withOpacity(1.0)),
               ),
             );
           },
@@ -312,8 +294,16 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   Future<Map?> reloadDataFromLoggedUser() async {
+    try{
+
     await widget.firebase.getCollectionOfLoggedUser();
     return widget.firebase.getLoggedUserCollection();
+    }catch (e){
+      print(e.toString()+'-------------');
+    }
+  }
+  void onError (String e){
+    print(e);
   }
 
   void onBottomNavigationBarItemTapped(int index) {
