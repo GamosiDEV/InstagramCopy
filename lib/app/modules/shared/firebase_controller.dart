@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/material.dart';
 
 class FirebaseController {
   FirebaseAuth _auth = FirebaseAuth.instance;
@@ -12,6 +13,7 @@ class FirebaseController {
   User? _authUser;
   late Map _userCollection ;
   String? profileImageUrl;
+  List<Map>? _uploadsFromUser = [];
 
   Future<UserCredential> signInFirebase(String _email, String _senha) async {
     return await _auth.signInWithEmailAndPassword(
@@ -30,16 +32,40 @@ class FirebaseController {
     return _userCollection;
   }
 
-  Future<void> getCollectionOfLoggedUser() async {
+  List<Map>? getUploadsFromUser(){
+    return _uploadsFromUser;
+  }
 
+  Future<void> getCollectionOfLoggedUser() async {
     await _firestore
         .collection('users')
         .doc(_authUser?.uid)
         .get()
         .then((value) {
           _userCollection = value.data()!;
-      setProfileImageUrl(_userCollection['profile-image-reference']);
+          setProfileImageUrl(_userCollection['profile-image-reference']);
     });
+    getUploadsFromLoggedUser();
+  }
+
+  Future<void> getUploadsFromLoggedUser() async {
+      await _firestore
+          .collection('users')
+          .doc(_authUser?.uid)
+          .collection('uploads')
+          .get()
+          .then((value) {
+            _uploadsFromUser?.clear();
+            print(value.docs.length);
+        for (final map in value.docs) {
+          Map i = map.data();
+          _uploadsFromUser?.add(i);
+        }
+      });
+  }
+
+  Future<String> getUrlFromUploadedImage(String reference) async {
+    return await _storage.ref(reference).getDownloadURL();
   }
 
   Future<void> setCollectionOfLoggedUser(Map<String,dynamic> userCollection) async {
@@ -79,5 +105,6 @@ class FirebaseController {
   void clearLoggedUserData(){
     _authUser = null;
     _userCollection = {};
+    _uploadsFromUser?.clear();
   }
 }

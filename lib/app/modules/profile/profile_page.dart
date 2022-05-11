@@ -1,4 +1,4 @@
-import 'dart:ffi';
+
 import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -59,7 +59,7 @@ class ProfilePageState extends State<ProfilePage> {
         actions: [
           IconButton(
             icon: Icon(Icons.add_box_rounded),
-            onPressed: null, //adicionar foto
+            onPressed: (){}, //adicionar foto
           ),
           IconButton(
             icon: Icon(Icons.menu),
@@ -106,15 +106,7 @@ class ProfilePageState extends State<ProfilePage> {
                 ),
               );
             }
-            return Container(
-              width: 200.0,
-              height: 200.0,
-              alignment: Alignment.center,
-              child: const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
-                strokeWidth: 5.0,
-              ),
-            );
+            return progressIndicator();
           },
         ),
       ),
@@ -131,6 +123,18 @@ class ProfilePageState extends State<ProfilePage> {
         ],
         currentIndex: _currentIndex,
         onTap: onBottomNavigationBarItemTapped,
+      ),
+    );
+  }
+
+  Widget progressIndicator(){
+    return Container(
+      width: 200.0,
+      height: 200.0,
+      alignment: Alignment.center,
+      child: const CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+        strokeWidth: 5.0,
       ),
     );
   }
@@ -163,7 +167,7 @@ class ProfilePageState extends State<ProfilePage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
-                      '10',
+                      '0',
                       style:
                       TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
@@ -178,7 +182,7 @@ class ProfilePageState extends State<ProfilePage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
-                      '280',
+                      '0',
                       style:
                       TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
@@ -193,7 +197,7 @@ class ProfilePageState extends State<ProfilePage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
-                      '780',
+                      '0',
                       style:
                       TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
@@ -253,16 +257,35 @@ class ProfilePageState extends State<ProfilePage> {
           padding: EdgeInsets.zero,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3, crossAxisSpacing: 2.0, mainAxisSpacing: 2.0),
-          itemCount: 20,
+          itemCount: widget.firebase.getUploadsFromUser()?.length,
           itemBuilder: (context, index) {
-            return SizedBox(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                    color:
-                    Color((math.Random().nextDouble() * 0xFFFFFF).toInt())
-                        .withOpacity(1.0)),
-              ),
-            );
+            List<Map>? userUploads = widget.firebase.getUploadsFromUser();
+            if(userUploads != null){
+              if (index < userUploads.length) {
+                Future<String> futuro = widget.firebase.getUrlFromUploadedImage(userUploads.elementAt(index)['upload-storage-reference']);
+                return FutureBuilder(
+                  future: futuro,
+                  builder: (context, snapshot){
+                    if(snapshot.data != null) {
+                      print(snapshot.hasData);
+                      return SizedBox(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              fit: BoxFit.fitWidth,
+                              alignment: FractionalOffset.center,
+                              image: NetworkImage(snapshot.data.toString()),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    return progressIndicator();
+                  },
+                );
+              }
+            }
+            return progressIndicator();
           },
         ),
         GridView.builder(
@@ -283,6 +306,18 @@ class ProfilePageState extends State<ProfilePage> {
         ),
       ],
     );
+  }
+
+  NetworkImage showUploadedImage(Map map){
+    String url = '';
+
+    widget.firebase.getUrlFromUploadedImage(map['profile-image-reference']).then((value) {
+      if(value != null){
+        url = value;
+      }
+    });
+
+    return NetworkImage(url);
   }
 
   void setUsername(String? name) {
