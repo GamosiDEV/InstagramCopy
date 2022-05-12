@@ -1,5 +1,6 @@
 import 'package:flutter_modular/flutter_modular.dart';
 
+import 'modules/post/post_module.dart';
 import 'modules/profile/profile_module.dart';
 import 'modules/profile/editor/editor_module.dart';
 import 'modules/auth/auth_module.dart';
@@ -20,6 +21,7 @@ class AppModule extends Module {
     ModuleRoute('/auth/sign_in/', module: SignInModule()),
     ModuleRoute('/profile/', module: ProfileModule()),
     ModuleRoute('/profile/editor/', module: EditorModule()),
+    ModuleRoute('/post/', module: PostModule()),
   ];
 
 }

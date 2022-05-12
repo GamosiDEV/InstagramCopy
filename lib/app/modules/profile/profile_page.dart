@@ -1,4 +1,3 @@
-
 import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -47,9 +46,9 @@ class ProfilePageState extends State<ProfilePage> {
       _refresh();
     });
   }
-  void _refresh(){
-    setUsername(widget.firebase
-        .getLoggedUserCollection()?['username']);
+
+  void _refresh() {
+    setUsername(widget.firebase.getLoggedUserCollection()?['username']);
     _postNumber = widget.firebase.getUploadsFromUser()!.length;
   }
 
@@ -61,7 +60,13 @@ class ProfilePageState extends State<ProfilePage> {
         actions: [
           IconButton(
             icon: Icon(Icons.add_box_rounded),
-            onPressed: (){}, //adicionar foto
+            onPressed: () {
+              Modular.to
+                  .pushNamed('/post/', arguments: widget.firebase)
+                  .whenComplete(() {
+                    setState(() {});
+              });
+            }, //adicionar foto
           ),
           IconButton(
             icon: Icon(Icons.menu),
@@ -89,22 +94,20 @@ class ProfilePageState extends State<ProfilePage> {
                     ];
                   },
                   body: Column(
-                      children: [
-                        TabBar(
-                          tabs: [
-                            Tab(
-                                icon: Icon(
-                                  Icons.grid_on,
-                                  color: Colors.grey,
-                                )),
-                            Tab(icon: Icon(Icons.save, color: Colors.grey)),
-                          ],
-                        ),
-                        Expanded(
-                            child: generateTabBarView(context, snapshot)
-                        ),
-                      ],
-                    ),
+                    children: [
+                      TabBar(
+                        tabs: [
+                          Tab(
+                              icon: Icon(
+                            Icons.grid_on,
+                            color: Colors.grey,
+                          )),
+                          Tab(icon: Icon(Icons.save, color: Colors.grey)),
+                        ],
+                      ),
+                      Expanded(child: generateTabBarView(context, snapshot)),
+                    ],
+                  ),
                 ),
               );
             }
@@ -129,7 +132,7 @@ class ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget progressIndicator(){
+  Widget progressIndicator() {
     return Container(
       width: 200.0,
       height: 200.0,
@@ -171,7 +174,7 @@ class ProfilePageState extends State<ProfilePage> {
                     Text(
                       _postNumber.toString(),
                       style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                     const Text('Publicações')
                   ],
@@ -186,7 +189,7 @@ class ProfilePageState extends State<ProfilePage> {
                     Text(
                       '0',
                       style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                     const Text('Seguidores')
                   ],
@@ -201,7 +204,7 @@ class ProfilePageState extends State<ProfilePage> {
                     Text(
                       '0',
                       style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                     const Text('Seguindo')
                   ],
@@ -217,7 +220,9 @@ class ProfilePageState extends State<ProfilePage> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Text(
-                  snapshot.data['fullname'] != null ? snapshot.data['fullname'] : '',
+                  snapshot.data['fullname'] != null
+                      ? snapshot.data['fullname']
+                      : '',
                   textAlign: TextAlign.start,
                   style: TextStyle(
                     fontSize: 16,
@@ -263,14 +268,15 @@ class ProfilePageState extends State<ProfilePage> {
           itemCount: widget.firebase.getUploadsFromUser()?.length,
           itemBuilder: (context, index) {
             List<Map>? userUploads = widget.firebase.getUploadsFromUser();
-            if(userUploads != null){
+            if (userUploads != null) {
               _postNumber = userUploads.length;
               if (index < userUploads.length) {
-                Future<String> futuro = widget.firebase.getUrlFromUploadedImage(userUploads.elementAt(index)['upload-storage-reference']);
+                Future<String> futuro = widget.firebase.getUrlFromUploadedImage(
+                    userUploads.elementAt(index)['upload-storage-reference']);
                 return FutureBuilder(
                   future: futuro,
-                  builder: (context, snapshot){
-                    if(snapshot.data != null) {
+                  builder: (context, snapshot) {
+                    if (snapshot.data != null) {
                       return SizedBox(
                         child: DecoratedBox(
                           decoration: BoxDecoration(
@@ -301,8 +307,8 @@ class ProfilePageState extends State<ProfilePage> {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                     color:
-                    Color((math.Random().nextDouble() * 0xFFFFFF).toInt())
-                        .withOpacity(1.0)),
+                        Color((math.Random().nextDouble() * 0xFFFFFF).toInt())
+                            .withOpacity(1.0)),
               ),
             );
           },
@@ -311,11 +317,13 @@ class ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  NetworkImage showUploadedImage(Map map){
+  NetworkImage showUploadedImage(Map map) {
     String url = '';
 
-    widget.firebase.getUrlFromUploadedImage(map['profile-image-reference']).then((value) {
-      if(value != null){
+    widget.firebase
+        .getUrlFromUploadedImage(map['profile-image-reference'])
+        .then((value) {
+      if (value != null) {
         url = value;
       }
     });
@@ -332,12 +340,11 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   Future<Map?> reloadDataFromLoggedUser() async {
-    try{
-
-    await widget.firebase.getCollectionOfLoggedUser();
-    return widget.firebase.getLoggedUserCollection();
-    }catch (e){
-      print(e.toString()+'- reloadDataFromLoggedUser()');
+    try {
+      await widget.firebase.getCollectionOfLoggedUser();
+      return widget.firebase.getLoggedUserCollection();
+    } catch (e) {
+      print(e.toString() + '- reloadDataFromLoggedUser()');
     }
   }
 

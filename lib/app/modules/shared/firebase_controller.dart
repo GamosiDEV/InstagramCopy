@@ -44,11 +44,46 @@ class FirebaseController {
         .get()
         .then((value) {
       _userCollection = value.data()!;
-      if(_userCollection['profile-image-reference'] != null)
+      if (_userCollection['profile-image-reference'] != null)
         setProfileImageUrl(_userCollection['profile-image-reference']);
     });
-      getUploadsFromLoggedUser();
+    getUploadsFromLoggedUser();
+  }
 
+  Future<void> uploadPost(File image, Map<String, dynamic> upload) async {
+    print("uploadPost");
+    sendUploadToStorage(image).then((value) {
+      print("upload post .then");
+      upload.addAll({"upload-storage-reference": value});
+      sendUploadToFirestore(upload);
+    });
+  }
+
+  Future<String> sendUploadToStorage(File image) async {
+    print("sendUploadToStorage");
+    await _storage
+        .ref(_userCollection['profile-image-reference'] + 'uploaded/')
+        .child(image.path.split('/').last)
+        .putFile(image);
+    print("----");
+    print(_userCollection['profile-image-reference'] +
+        'uploaded/' +
+        image.path.split('/').last +
+        '/');
+    return _userCollection['profile-image-reference'] +
+        'uploaded/' +
+        image.path.split('/').last +
+        '/';
+  }
+
+  Future<void> sendUploadToFirestore(Map<String, dynamic> upload) async {
+    print("SendUploadToFirestore");
+    await _firestore
+        .collection('users')
+        .doc(_authUser?.uid)
+        .collection('uploads')
+        .doc()
+        .set(upload);
   }
 
   Future<void> getUploadsFromLoggedUser() async {
