@@ -122,9 +122,15 @@ class SignInPageState extends State<SignInPage> {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('Verificação de email enviada')));
 
+
         Map<String, dynamic> map = {
           "email": user.email,
           "username": _username,
+          "bio": '',
+          "birth-date": '',
+          "fullname": '',
+          "genere": '',
+          "links": '',
         };
 
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set(map);

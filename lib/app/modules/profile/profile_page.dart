@@ -32,6 +32,7 @@ class ProfilePageState extends State<ProfilePage> {
   String usernameText = '';
   String profileImageUrl = '';
   int indexOfSelectedTab = 1;
+  int _postNumber = 0;
   final List<String> pages = <String>[
     '/home/',
     '/profile/',
@@ -47,12 +48,9 @@ class ProfilePageState extends State<ProfilePage> {
     });
   }
   void _refresh(){
-    print(widget.firebase
-        .getLoggedUser()
-        ?.displayName);
     setUsername(widget.firebase
         .getLoggedUserCollection()?['username']);
-
+    _postNumber = widget.firebase.getUploadsFromUser()!.length;
   }
 
   @override
@@ -171,7 +169,7 @@ class ProfilePageState extends State<ProfilePage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
-                      '0',
+                      _postNumber.toString(),
                       style:
                       TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
@@ -266,13 +264,13 @@ class ProfilePageState extends State<ProfilePage> {
           itemBuilder: (context, index) {
             List<Map>? userUploads = widget.firebase.getUploadsFromUser();
             if(userUploads != null){
+              _postNumber = userUploads.length;
               if (index < userUploads.length) {
                 Future<String> futuro = widget.firebase.getUrlFromUploadedImage(userUploads.elementAt(index)['upload-storage-reference']);
                 return FutureBuilder(
                   future: futuro,
                   builder: (context, snapshot){
                     if(snapshot.data != null) {
-                      print(snapshot.hasData);
                       return SizedBox(
                         child: DecoratedBox(
                           decoration: BoxDecoration(
@@ -341,9 +339,6 @@ class ProfilePageState extends State<ProfilePage> {
     }catch (e){
       print(e.toString()+'- reloadDataFromLoggedUser()');
     }
-  }
-  void onError (String e){
-    print(e);
   }
 
   void onBottomNavigationBarItemTapped(int index) {

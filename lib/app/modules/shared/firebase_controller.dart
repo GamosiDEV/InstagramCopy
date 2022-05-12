@@ -60,7 +60,6 @@ class FirebaseController {
         .then((value) {
       _uploadsFromUser?.clear();
       if (value != null) {
-        print(value.docs.length);
         for (final map in value.docs) {
           Map i = map.data();
           _uploadsFromUser?.add(i);
