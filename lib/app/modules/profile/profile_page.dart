@@ -36,7 +36,6 @@ class ProfilePageState extends State<ProfilePage> {
     '/home/',
     '/profile/',
   ];
-  late Future<Map?> _dataFromLoggedUser ;
 
   @override
   void initState() {
@@ -44,11 +43,16 @@ class ProfilePageState extends State<ProfilePage> {
     super.initState();
 
     WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
-      setUsername(widget.firebase
-          .getLoggedUser()
-          ?.displayName);
-      _dataFromLoggedUser = reloadDataFromLoggedUser();
+      _refresh();
     });
+  }
+  void _refresh(){
+    print(widget.firebase
+        .getLoggedUser()
+        ?.displayName);
+    setUsername(widget.firebase
+        .getLoggedUserCollection()?['username']);
+
   }
 
   @override
@@ -215,7 +219,7 @@ class ProfilePageState extends State<ProfilePage> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Text(
-                  snapshot.data['fullname'],
+                  snapshot.data['fullname'] != null ? snapshot.data['fullname'] : '',
                   textAlign: TextAlign.start,
                   style: TextStyle(
                     fontSize: 16,
@@ -223,7 +227,7 @@ class ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
                 Text(
-                  snapshot.data['bio'],
+                  snapshot.data['bio'] != null ? snapshot.data['bio'] : '',
                   style: TextStyle(fontSize: 16),
                 )
               ],
@@ -233,9 +237,10 @@ class ProfilePageState extends State<ProfilePage> {
             padding: EdgeInsets.all(8.0),
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                Modular.to
+              onPressed: () async {
+                await Modular.to
                     .pushNamed('/profile/editor/', arguments: widget.firebase);
+                _refresh();
               },
               child: Text(
                 'Editar perfil',
@@ -327,14 +332,14 @@ class ProfilePageState extends State<ProfilePage> {
       });
     }
   }
- 
+
   Future<Map?> reloadDataFromLoggedUser() async {
     try{
 
     await widget.firebase.getCollectionOfLoggedUser();
     return widget.firebase.getLoggedUserCollection();
     }catch (e){
-      print(e.toString()+'-------------');
+      print(e.toString()+'- reloadDataFromLoggedUser()');
     }
   }
   void onError (String e){

@@ -11,7 +11,8 @@ class FirebaseController {
   FirebaseFirestore _firestore = FirebaseFirestore.instance;
   FirebaseStorage _storage = FirebaseStorage.instance;
   User? _authUser;
-  late Map _userCollection ;
+  late Map _userCollection;
+
   String? profileImageUrl;
   List<Map>? _uploadsFromUser = [];
 
@@ -28,11 +29,11 @@ class FirebaseController {
     return _authUser;
   }
 
-  Map? getLoggedUserCollection(){
+  Map? getLoggedUserCollection() {
     return _userCollection;
   }
 
-  List<Map>? getUploadsFromUser(){
+  List<Map>? getUploadsFromUser() {
     return _uploadsFromUser;
   }
 
@@ -42,49 +43,54 @@ class FirebaseController {
         .doc(_authUser?.uid)
         .get()
         .then((value) {
-          _userCollection = value.data()!;
-          setProfileImageUrl(_userCollection['profile-image-reference']);
+      _userCollection = value.data()!;
+      if(_userCollection['profile-image-reference'] != null)
+        setProfileImageUrl(_userCollection['profile-image-reference']);
     });
-    getUploadsFromLoggedUser();
+      getUploadsFromLoggedUser();
+
   }
 
   Future<void> getUploadsFromLoggedUser() async {
-      await _firestore
-          .collection('users')
-          .doc(_authUser?.uid)
-          .collection('uploads')
-          .get()
-          .then((value) {
-            _uploadsFromUser?.clear();
-            print(value.docs.length);
+    await _firestore
+        .collection('users')
+        .doc(_authUser?.uid)
+        .collection('uploads')
+        .get()
+        .then((value) {
+      _uploadsFromUser?.clear();
+      if (value != null) {
+        print(value.docs.length);
         for (final map in value.docs) {
           Map i = map.data();
           _uploadsFromUser?.add(i);
         }
-      });
+      }
+    });
   }
 
   Future<String> getUrlFromUploadedImage(String reference) async {
     return await _storage.ref(reference).getDownloadURL();
   }
 
-  Future<void> setCollectionOfLoggedUser(Map<String,dynamic> userCollection) async {
-    await _firestore.collection('users')
-        .doc(_auth.currentUser?.uid).set(userCollection);
+  Future<void> setCollectionOfLoggedUser(
+      Map<String, dynamic> userCollection) async {
+    await _firestore
+        .collection('users')
+        .doc(_auth.currentUser?.uid)
+        .set(userCollection);
   }
 
   Future<void> updateProfileImage(String reference, String path) async {
-    await _storage.ref(reference)
-        .child('profile')
-        .putFile(File(path));
+    await _storage.ref(reference).child('profile').putFile(File(path));
   }
 
   String? getProfileImageUrl() {
     return profileImageUrl;
   }
 
-  void setProfileImageUrl(String ref) async{
-    await _storage.ref(ref+'profile').getDownloadURL().then((value){
+  void setProfileImageUrl(String ref) async {
+    await _storage.ref(ref + 'profile').getDownloadURL().then((value) {
       profileImageUrl = value;
     });
   }
@@ -102,7 +108,7 @@ class FirebaseController {
     return true;
   }
 
-  void clearLoggedUserData(){
+  void clearLoggedUserData() {
     _authUser = null;
     _userCollection = {};
     _uploadsFromUser?.clear();
