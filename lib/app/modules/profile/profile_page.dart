@@ -327,7 +327,7 @@ class ProfilePageState extends State<ProfilePage> {
       });
     }
   }
-
+ 
   Future<Map?> reloadDataFromLoggedUser() async {
     try{
 
