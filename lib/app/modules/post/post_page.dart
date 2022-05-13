@@ -42,7 +42,7 @@ class PostPageState extends State<PostPage> {
             color: Colors.lightBlue,
             alignment: Alignment.centerRight,
             icon: Icon(Icons.arrow_forward),
-            onPressed: () {
+            onPressed: () async{
               if (_selectedFilePath != null &&
                   _selectedFilePath != '' &&
                   _formKey.currentState!.validate()) {
@@ -53,12 +53,12 @@ class PostPageState extends State<PostPage> {
                   "uploader-id": widget.firebase.getAuthUser()?.uid
                 };
                 print(upload['description']);
-                widget.firebase
-                    .uploadPost(File(_selectedFilePath!), upload)
-                    .whenComplete(() {
-                  print("completado 51");
-                  Modular.to.pop();
-                });
+                  await widget.firebase
+                      .uploadPost(File(_selectedFilePath!), upload)
+                      .then((value) {
+                    print("completado 51");
+                  });
+                Modular.to.pop(true);
               }
             },
           ),
@@ -71,39 +71,41 @@ class PostPageState extends State<PostPage> {
         child: ListView(
           children: [
             InkWell(
-              onTap: selectImage,
-              child: (_selectedFilePath != null)
-                  ? FadeInImage(
-                      fit: BoxFit.contain,
-                      placeholder: MemoryImage(kTransparentImage),
-                      // verificar e arrumar
-                      image: Image.file(File(_selectedFilePath!)).image,
-                    )
-                  : SizedBox(
-                      height: 400,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                              begin: Alignment.bottomLeft,
-                              end: Alignment.topRight,
-                              colors: [
-                                Color(0xFFFFB344),
-                                Color(0xFFE60064),
-                              ]),
-                        ),
-                        height: 300,
-                        child: const Center(
-                          child: Text(
-                            'Aperte para selecionar uma imagem',
-                            style: TextStyle(
-                              color: Color(0xFFFAFAFA),
-                              fontSize: 18,
+                onTap: selectImage,
+                child: Container(
+                  height: MediaQuery.of(context).size.height * 0.65,
+                  child: (_selectedFilePath != null)
+                      ? FadeInImage(
+                          fit: BoxFit.contain,
+                          placeholder: MemoryImage(kTransparentImage),
+                          // verificar e arrumar
+                          image: Image.file(File(_selectedFilePath!)).image,
+                        )
+                      : SizedBox(
+                          height: 400,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                  begin: Alignment.bottomLeft,
+                                  end: Alignment.topRight,
+                                  colors: [
+                                    Color(0xFFFFB344),
+                                    Color(0xFFE60064),
+                                  ]),
+                            ),
+                            height: 300,
+                            child: const Center(
+                              child: Text(
+                                'Aperte para selecionar uma imagem',
+                                style: TextStyle(
+                                  color: Color(0xFFFAFAFA),
+                                  fontSize: 18,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-            ),
+                )),
             Form(
               key: _formKey,
               child: Padding(

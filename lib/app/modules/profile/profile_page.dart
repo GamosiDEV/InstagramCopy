@@ -63,8 +63,8 @@ class ProfilePageState extends State<ProfilePage> {
             onPressed: () {
               Modular.to
                   .pushNamed('/post/', arguments: widget.firebase)
-                  .whenComplete(() {
-                    setState(() {});
+                  .then((value) {
+                if (value == true) _refresh();
               });
             }, //adicionar foto
           ),
@@ -265,10 +265,12 @@ class ProfilePageState extends State<ProfilePage> {
           padding: EdgeInsets.zero,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3, crossAxisSpacing: 2.0, mainAxisSpacing: 2.0),
-          itemCount: widget.firebase.getUploadsFromUser()?.length,
+          itemCount: _postNumber,
           itemBuilder: (context, index) {
             List<Map>? userUploads = widget.firebase.getUploadsFromUser();
             if (userUploads != null) {
+              userUploads.sort((m1, m2) =>
+                  m2["upload-date-time"].compareTo(m1["upload-date-time"]));
               _postNumber = userUploads.length;
               if (index < userUploads.length) {
                 Future<String> futuro = widget.firebase.getUrlFromUploadedImage(
@@ -277,16 +279,26 @@ class ProfilePageState extends State<ProfilePage> {
                   future: futuro,
                   builder: (context, snapshot) {
                     if (snapshot.data != null) {
-                      return SizedBox(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              fit: BoxFit.fitWidth,
-                              alignment: FractionalOffset.center,
-                              image: NetworkImage(snapshot.data.toString()),
+                      return GestureDetector(
+                        child: SizedBox(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+                                fit: BoxFit.fitWidth,
+                                alignment: FractionalOffset.center,
+                                image: NetworkImage(snapshot.data.toString()),
+                              ),
                             ),
                           ),
                         ),
+                        onTap: () {
+                          //print('/profile/feed/?uploadDocumentId='+userUploads.elementAt(index)['id']);
+                          Modular.to.pushNamed(
+                            '/profile/feed/?upload-document-id='+userUploads.elementAt(index)['id'],
+                            arguments:
+                              widget.firebase,
+                          );
+                        },
                       );
                     }
                     return progressIndicator();

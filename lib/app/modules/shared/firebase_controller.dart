@@ -55,6 +55,7 @@ class FirebaseController {
     sendUploadToStorage(image).then((value) {
       print("upload post .then");
       upload.addAll({"upload-storage-reference": value});
+      upload.addAll({"upload-date-time": DateTime.now()});
       sendUploadToFirestore(upload);
     });
   }
@@ -96,7 +97,8 @@ class FirebaseController {
       _uploadsFromUser?.clear();
       if (value != null) {
         for (final map in value.docs) {
-          Map i = map.data();
+          Map<String,dynamic> i = map.data();
+          i.addAll({'id':map.id.toString()});
           _uploadsFromUser?.add(i);
         }
       }
