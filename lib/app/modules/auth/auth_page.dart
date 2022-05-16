@@ -154,7 +154,7 @@ class AuthPageState extends State<AuthPage> {
     try {
       widget.firebase.signInFirebase(email.text, senha.text).then((value) {
         if (userAuthVerification(value.user)) {
-          AuthUserModel user = AuthUserModel(value.user?.uid, value.user?.email, value.user?.emailVerified, value.user?.displayName);
+          //AuthUserModel user = AuthUserModel(value.user?.uid, value.user?.email, value.user?.emailVerified, value.user?.displayName);
           widget.firebase.setAuthUser(value.user);
           loggedUserToHome();
         }

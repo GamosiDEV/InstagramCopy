@@ -48,8 +48,9 @@ class PostPageState extends State<PostPage> {
                   _formKey.currentState!.validate()) {
                 Map<String, dynamic> upload = {
                   "description": _text.text,
-                  "likes": 0,
-                  // "upload-date-time": data e hora,
+                  "liked-by": [],
+                  "commentaries": [],
+                  "upload-date-time": DateTime.now(),
                   "uploader-id": widget.firebase.getAuthUser()?.uid
                 };
                 print(upload['description']);

@@ -31,11 +31,6 @@ class HomePageState extends State<HomePage> {
   }
 
   @override
-  HomePageState() {
-    print("construtor");
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(

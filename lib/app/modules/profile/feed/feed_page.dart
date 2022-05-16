@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:instagram_copy/app/modules/profile/feed/feed_store.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +12,7 @@ class FeedPage extends StatefulWidget {
   const FeedPage(
       {Key? key,
       this.title = 'FeedPage',
-        required this.uploadDocumentId,
+      required this.uploadDocumentId,
       required this.firebase})
       : super(key: key);
 
@@ -25,11 +26,10 @@ class FeedPageState extends State<FeedPage> {
   @override
   void initState() {
     // TODO: implement initState
-    super.initState();
-    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
-      print(widget.uploadDocumentId);//pegar esse id, buscar o upload na base de dados e exibilo na tela com todas as suas informações
+    super.initState(); WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
+      print(widget
+          .uploadDocumentId); //pegar esse id, buscar o upload na base de dados e exibilo na tela com todas as suas informações
     });
-
   }
 
   @override
@@ -40,118 +40,164 @@ class FeedPageState extends State<FeedPage> {
       ),
       body: SingleChildScrollView(
         child: GestureDetector(
-          child: Card(
-            elevation: 0,
-            child: Column(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(5.0),
-                  child: Row(
+          child: FutureBuilder(
+            future: widget.firebase.getDocumentOfUploadedImage(widget.uploadDocumentId),
+            builder: (context, snapshot) {
+              if (snapshot != null && snapshot.data != null) {
+                Map<String,dynamic> upload = snapshot.data as Map<String, dynamic>;
+                return Card(
+                  elevation: 0,
+                  child: Column(
                     children: [
                       Container(
-                        padding: const EdgeInsets.fromLTRB(5.0, 0, 10.0, 0),
-                        child: ClipOval(
-                          child: SizedBox.fromSize(
-                            size: Size.fromRadius(16),
-                            child: Image.asset(
-                              'assets/images/face.jpg',
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            print("object");
-                          },
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [Text('Nome'), Text('Local')],
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.share),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  height: MediaQuery.of(context).size.height * 0.65,
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      fit: BoxFit.fitWidth,
-                      alignment: FractionalOffset.center,
-                      image: NetworkImage(
-                          'https://images.unsplash.com/photo-1561503972-839d0c56de17?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MXx8amFwYW4lMjBzdHJlZXQlMjB2aWV3fGVufDB8fDB8fA%3D%3D&w=1000&q=80'),
-                    ),
-                  ),
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        print('Star');
-                      },
-                      icon: const Icon(Icons.star_border),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        print('Comment');
-                      },
-                      icon: const Icon(Icons.comment),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        print('Share');
-                      },
-                      icon: const Icon(Icons.share),
-                    ),
-                    //icone para multiplas fotos fica por aqui
-                    Spacer(),
-                    IconButton(
-                      onPressed: null,
-                      icon: const Icon(Icons.flag_outlined),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: EdgeInsets.all(10.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('XX curtidas'),
-                      Text('Nome ' +
-                          'Descrição da Imagem com maximo de 2 linhas e um botão para exibir mais'),
-                      Text('Ver Todos os Comentarios'),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(5.0),
-                            child: ClipOval(
-                              child: SizedBox.fromSize(
-                                size: Size.fromRadius(16),
-                                child: Image.asset(
-                                  'assets/images/face.jpg',
+                        padding: EdgeInsets.all(5.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding:
+                                  const EdgeInsets.fromLTRB(5.0, 0, 10.0, 0),
+                              child: ClipOval(
+                                child: SizedBox.fromSize(
+                                  size: Size.fromRadius(16),
+                                  child: getCurrentProfileImage(),
                                 ),
                               ),
                             ),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  print("Send to Profile page of the uploader");
+                                },
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Text(
+                                      widget.firebase
+                                              .getLoggedUserCollection()?[
+                                          'username'],
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                print("compartilhar imagem");
+                              },
+                              icon: const Icon(Icons.share),
+                            ),
+                          ],
+                        ),
+                      ),
+                      setImage(upload['upload-storage-reference']),
+                      Row(
+                        mainAxisSize: MainAxisSize.max,
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              print('Star');
+                            },
+                            icon: const Icon(Icons.star_border),
                           ),
-                          Text('Digite seu comentario'),
+                          IconButton(
+                            onPressed: () {
+                              print('Comments');
+                            },
+                            icon: const Icon(Icons.comment),
+                          ),
+                          //icone para multiplas fotos fica por aqui
+                          Spacer(),
+                          IconButton(
+                            onPressed: (){
+                                widget.firebase.setSaveToUser(widget.uploadDocumentId.toString());
+                                setState(() {});
+                            },
+                            icon: widget.firebase.asSaved(widget.uploadDocumentId.toString()) ? Icon(Icons.save) : Icon(Icons.save_outlined),
+                          ),
                         ],
                       ),
+                      Container(
+                        padding: EdgeInsets.all(10.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(upload['likes'].toString()+' curtidas'),
+                            Text(widget.firebase
+                                .getLoggedUserCollection()?[
+                            'username']+' '+upload['description']),
+                            Text('Ver Comentarios'),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(5.0),
+                                  child: ClipOval(
+                                    child: SizedBox.fromSize(
+                                      size: Size.fromRadius(16),
+                                      child: Image.asset(
+                                        'assets/images/face.jpg',
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Text('Digite seu comentario'),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      Row(),
                     ],
                   ),
-                ),
-                Row(),
-              ],
-            ),
+                );
+              }
+              return Container();
+            },
           ),
         ),
       ),
     );
+  }
+
+  Widget getCurrentProfileImage() {
+    String? url = widget.firebase.getProfileImageUrl();
+    if (url != null && url != '') {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+      );
+    } else {
+      return getPlaceholder();
+    }
+  }
+
+  Widget getPlaceholder() {
+    return Image.network(
+      'https://previews.123rf.com/images/happyvector071/happyvector0711904/happyvector071190414608/120957993-creative-illustration-of-default-avatar-profile-placeholder-isolated-on-background-art-design-grey-p.jpg',
+      fit: BoxFit.cover,
+    );
+  }
+
+  Widget setImage(String a) {
+    print(a);
+    Future<String> futuro = widget.firebase.getUrlFromUploadedImage(a);
+    return FutureBuilder(
+      future: futuro,
+        builder: (context,snapshot){
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.65,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                fit: BoxFit.fitWidth,
+                alignment: FractionalOffset.center,
+                image: NetworkImage(snapshot.data.toString()),
+              ),
+            ),
+          );
+    });
   }
 }

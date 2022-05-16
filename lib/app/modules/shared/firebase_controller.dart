@@ -12,6 +12,7 @@ class FirebaseController {
   FirebaseStorage _storage = FirebaseStorage.instance;
   User? _authUser;
   late Map _userCollection;
+  List uploadsId = [];
 
   String? profileImageUrl;
   List<Map>? _uploadsFromUser = [];
@@ -55,10 +56,23 @@ class FirebaseController {
     sendUploadToStorage(image).then((value) {
       print("upload post .then");
       upload.addAll({"upload-storage-reference": value});
-      upload.addAll({"upload-date-time": DateTime.now()});
       sendUploadToFirestore(upload);
     });
   }
+
+  Future<void> sendSavedPostToFirestore(Map<String, dynamic> data) async {
+    await _firestore.collection('saves').add(data).then((value) {
+      setSaveToUser(value.id);
+    });
+  }
+
+  /*
+  print("SendUploadToFirestore");
+    await _firestore.collection('uploads').add(upload).then((value) {
+      print(value.id);
+      setUploadToUser(value.id);
+    });
+   */
 
   Future<String> sendUploadToStorage(File image) async {
     print("sendUploadToStorage");
@@ -79,30 +93,99 @@ class FirebaseController {
 
   Future<void> sendUploadToFirestore(Map<String, dynamic> upload) async {
     print("SendUploadToFirestore");
+    await _firestore.collection('uploads').add(upload).then((value) {
+      print(value.id);
+      setUploadToUser(value.id);
+    });
+  }
+
+  Future<void> setUploadToUser(String id) async {
+    await _firestore.collection('users').doc(_authUser?.uid).update({
+      'uploads': FieldValue.arrayUnion([id])
+    });
+  }
+
+  Future<void> setSaveToUser(String id) async {
     await _firestore
         .collection('users')
         .doc(_authUser?.uid)
-        .collection('uploads')
-        .doc()
-        .set(upload);
+        .get()
+        .then((value) async {
+      if (value['saves'] != null) {
+        for (final i in value['saves']) {
+          if (id == i) {//mecher aqui
+            await _firestore.collection('users').doc(_authUser?.uid).update({
+              'saves': FieldValue.arrayRemove([id])
+            }).whenComplete((){
+              _userCollection['saves'].removeWhere((item) => item == id);
+            });
+          }
+        }
+        await _firestore.collection('users').doc(_authUser?.uid).update({
+          'saves': FieldValue.arrayUnion([id])
+        });
+      }
+    });
+    await _firestore.collection('users').doc(_authUser?.uid).update({
+      'saves': FieldValue.arrayUnion([id])
+    });
+  }
+
+  bool asSaved(String uploadId) {
+    for (final i in _userCollection['saves']) {
+      if (i == uploadId) {
+        return true;
+      }
+    }
+    return false;
   }
 
   Future<void> getUploadsFromLoggedUser() async {
-    await _firestore
-        .collection('users')
-        .doc(_authUser?.uid)
-        .collection('uploads')
-        .get()
-        .then((value) {
-      _uploadsFromUser?.clear();
-      if (value != null) {
-        for (final map in value.docs) {
-          Map<String,dynamic> i = map.data();
-          i.addAll({'id':map.id.toString()});
-          _uploadsFromUser?.add(i);
+    uploadsId = _userCollection['uploads'];
+    print('uploadsid===');
+    print(uploadsId);
+    List<Map>? list = [];
+    await _firestore.collection('uploads').get().then((value) {
+      for (String id in uploadsId) {
+        for (final upload in value.docs) {
+          if (id == upload.id) {
+            Map<String, dynamic> i = upload.data();
+            i.addAll({'id': upload.id.toString()});
+            list.add(i);
+          }
         }
       }
+      _uploadsFromUser = list;
     });
+
+    // await _firestore
+    //     .collection('users')
+    //     .doc(_authUser?.uid)
+    //     .collection('uploads')
+    //     .get()
+    //     .then((value) {
+    //   _uploadsFromUser?.clear();
+    //   if (value != null) {
+    //     for (final map in value.docs) {
+    //       Map<String, dynamic> i = map.data();
+    //       i.addAll({'id': map.id.toString()});
+    //       _uploadsFromUser?.add(i);
+    //     }
+    //   }
+    // });
+  }
+
+  Future<Map<String, dynamic>> getDocumentOfUploadedImage(
+      String? documentId) async {
+    Map<String, dynamic> upload;
+    upload = await _firestore
+        .collection('uploads')
+        .doc(documentId)
+        .get()
+        .then((value) {
+      return value.data()!;
+    });
+    return upload;
   }
 
   Future<String> getUrlFromUploadedImage(String reference) async {
@@ -148,5 +231,6 @@ class FirebaseController {
     _authUser = null;
     _userCollection = {};
     _uploadsFromUser?.clear();
+    uploadsId = [];
   }
 }
