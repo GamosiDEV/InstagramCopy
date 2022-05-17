@@ -13,9 +13,11 @@ class FirebaseController {
   User? _authUser;
   late Map _userCollection;
   List uploadsId = [];
+  List savedsId = [];
 
   String? profileImageUrl;
   List<Map>? _uploadsFromUser = [];
+  List<Map>? _savedsFromUser = [];
 
   Future<UserCredential> signInFirebase(String _email, String _senha) async {
     return await _auth.signInWithEmailAndPassword(
@@ -38,6 +40,10 @@ class FirebaseController {
     return _uploadsFromUser;
   }
 
+  List<Map>? getSavedsFromUser(){
+    return _savedsFromUser;
+  }
+
   Future<void> getCollectionOfLoggedUser() async {
     await _firestore
         .collection('users')
@@ -49,6 +55,7 @@ class FirebaseController {
         setProfileImageUrl(_userCollection['profile-image-reference']);
     });
     getUploadsFromLoggedUser();
+    getSavedsFromLoggedUser();
   }
 
   Future<void> uploadPost(File image, Map<String, dynamic> upload) async {
@@ -65,14 +72,6 @@ class FirebaseController {
       setSaveToUser(value.id);
     });
   }
-
-  /*
-  print("SendUploadToFirestore");
-    await _firestore.collection('uploads').add(upload).then((value) {
-      print(value.id);
-      setUploadToUser(value.id);
-    });
-   */
 
   Future<String> sendUploadToStorage(File image) async {
     print("sendUploadToStorage");
@@ -132,6 +131,7 @@ class FirebaseController {
         return;
       }
     });
+    getSavedsFromLoggedUser();
   }
 
   bool asSaved(String uploadId) {
@@ -187,37 +187,37 @@ class FirebaseController {
 
   Future<void> getUploadsFromLoggedUser() async {
     uploadsId = _userCollection['uploads'];
-    print('uploadsid===');
-    print(uploadsId);
-    List<Map>? list = [];
+    List<Map>? listUpload = [];
     await _firestore.collection('uploads').get().then((value) {
       for (String id in uploadsId) {
         for (final upload in value.docs) {
           if (id == upload.id) {
             Map<String, dynamic> i = upload.data();
             i.addAll({'id': upload.id.toString()});
-            list.add(i);
+            listUpload.add(i);
           }
         }
       }
-      _uploadsFromUser = list;
+      _uploadsFromUser = listUpload;
     });
+  }
 
-    // await _firestore
-    //     .collection('users')
-    //     .doc(_authUser?.uid)
-    //     .collection('uploads')
-    //     .get()
-    //     .then((value) {
-    //   _uploadsFromUser?.clear();
-    //   if (value != null) {
-    //     for (final map in value.docs) {
-    //       Map<String, dynamic> i = map.data();
-    //       i.addAll({'id': map.id.toString()});
-    //       _uploadsFromUser?.add(i);
-    //     }
-    //   }
-    // });
+  Future<void> getSavedsFromLoggedUser() async {
+    savedsId = _userCollection['saves'];
+    List<Map>? listSaved = [];
+    await _firestore.collection('uploads').get().then((value) {
+      for (String id in savedsId) {
+        for (final saved in value.docs) {
+          if (id == saved.id) {
+            Map<String, dynamic> i = saved.data();
+            i.addAll({'id': saved.id.toString()});
+            listSaved.add(i);
+          }
+        }
+      }
+      _savedsFromUser = listSaved;
+    });
+    print('getsavedsFromLoggedUser');
   }
 
   Future<Map<String, dynamic>> getDocumentOfUploadedImage(
@@ -277,5 +277,7 @@ class FirebaseController {
     _userCollection = {};
     _uploadsFromUser?.clear();
     uploadsId = [];
+    savedsId = [];
+    _savedsFromUser?.clear();
   }
 }

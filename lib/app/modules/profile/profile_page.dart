@@ -32,6 +32,7 @@ class ProfilePageState extends State<ProfilePage> {
   String profileImageUrl = '';
   int indexOfSelectedTab = 1;
   int _postNumber = 0;
+  int _savedNumber = 0;
   final List<String> pages = <String>[
     '/home/',
     '/profile/',
@@ -50,6 +51,7 @@ class ProfilePageState extends State<ProfilePage> {
   void _refresh() {
     setUsername(widget.firebase.getLoggedUserCollection()?['username']);
     _postNumber = widget.firebase.getUploadsFromUser()!.length;
+    _savedNumber = widget.firebase.getSavedsFromUser()!.length;
   }
 
   @override
@@ -60,11 +62,11 @@ class ProfilePageState extends State<ProfilePage> {
         actions: [
           IconButton(
             icon: Icon(Icons.add_box_rounded),
-            onPressed: () {
-              Modular.to
+            onPressed: () async {
+              await Modular.to
                   .pushNamed('/post/', arguments: widget.firebase)
                   .then((value) {
-                if (value == true) _refresh();
+                _refresh();
               });
             }, //adicionar foto
           ),
@@ -242,8 +244,10 @@ class ProfilePageState extends State<ProfilePage> {
             child: ElevatedButton(
               onPressed: () async {
                 await Modular.to
-                    .pushNamed('/profile/editor/', arguments: widget.firebase);
-                _refresh();
+                    .pushNamed('/profile/editor/', arguments: widget.firebase)
+                    .then((value) {
+                      _refresh();
+                });
               },
               child: Text(
                 'Editar perfil',
@@ -291,13 +295,15 @@ class ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                         ),
-                        onTap: () {
-                          //print('/profile/feed/?uploadDocumentId='+userUploads.elementAt(index)['id']);
-                          Modular.to.pushNamed(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () async {
+                          await Modular.to.pushNamed(
                             '/profile/feed/?upload-document-id='+userUploads.elementAt(index)['id'],
                             arguments:
                               widget.firebase,
-                          );
+                          ).then((value) {
+                            _refresh();
+                          });
                         },
                       );
                     }
@@ -313,25 +319,62 @@ class ProfilePageState extends State<ProfilePage> {
           padding: EdgeInsets.zero,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3, crossAxisSpacing: 2.0, mainAxisSpacing: 2.0),
-          itemCount: 7,
+          itemCount: _savedNumber,
           itemBuilder: (context, index) {
-            return SizedBox(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                    color:
-                        Color((math.Random().nextDouble() * 0xFFFFFF).toInt())
-                            .withOpacity(1.0)),
-              ),
-            );
+            List<Map>? userSaveds = widget.firebase.getSavedsFromUser();
+            if (userSaveds != null) {
+              userSaveds.sort((m1, m2) =>
+                  m2["upload-date-time"].compareTo(m1["upload-date-time"]));
+              _savedNumber = userSaveds.length;
+              if (index < userSaveds.length) {
+                Future<String> futuro = widget.firebase.getUrlFromUploadedImage(
+                    userSaveds.elementAt(index)['upload-storage-reference']);
+                return FutureBuilder(
+                  future: futuro,
+                  builder: (context, snapshot) {
+                    if (snapshot.data != null) {
+                      return GestureDetector(
+                        child: SizedBox(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+                                fit: BoxFit.fitWidth,
+                                alignment: FractionalOffset.center,
+                                image: NetworkImage(snapshot.data.toString()),
+                              ),
+                            ),
+                          ),
+                        ),
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () async {
+                          //print('/profile/feed/?uploadDocumentId='+userUploads.elementAt(index)['id']);
+                          await Modular.to.pushNamed(
+                            '/profile/feed/?upload-document-id='+userSaveds.elementAt(index)['id'],
+                            arguments:
+                            widget.firebase,
+                          ).then((value){
+                            print('vortei');
+                            setState(() {
+                              _savedNumber = widget.firebase.getSavedsFromUser()!.length;
+                            });
+                          });
+                        },
+                      );
+                    }
+                    return progressIndicator();
+                  },
+                );
+              }
+            }
+            return progressIndicator();
           },
-        ),
+        )
       ],
     );
   }
 
   NetworkImage showUploadedImage(Map map) {
     String url = '';
-
     widget.firebase
         .getUrlFromUploadedImage(map['profile-image-reference'])
         .then((value) {

@@ -59,7 +59,7 @@ class PostPageState extends State<PostPage> {
                       .then((value) {
                     print("completado 51");
                   });
-                Modular.to.pop(true);
+                Modular.to.pop();
               }
             },
           ),
