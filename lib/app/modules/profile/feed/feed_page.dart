@@ -22,13 +22,20 @@ class FeedPage extends StatefulWidget {
 
 class FeedPageState extends State<FeedPage> {
   final FeedStore store = Modular.get();
+  bool asSaved = false;
+  bool asLiked = false;
 
   @override
   void initState() {
     // TODO: implement initState
-    super.initState(); WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
+    super.initState();
+    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
       print(widget
           .uploadDocumentId); //pegar esse id, buscar o upload na base de dados e exibilo na tela com todas as suas informações
+      asSaved = widget.firebase.asSaved(widget.uploadDocumentId.toString());
+      widget.firebase
+          .asLiked(widget.uploadDocumentId.toString())
+          .then((value) => asLiked = value);
     });
   }
 
@@ -41,10 +48,12 @@ class FeedPageState extends State<FeedPage> {
       body: SingleChildScrollView(
         child: GestureDetector(
           child: FutureBuilder(
-            future: widget.firebase.getDocumentOfUploadedImage(widget.uploadDocumentId),
+            future: widget.firebase
+                .getDocumentOfUploadedImage(widget.uploadDocumentId),
             builder: (context, snapshot) {
               if (snapshot != null && snapshot.data != null) {
-                Map<String,dynamic> upload = snapshot.data as Map<String, dynamic>;
+                Map<String, dynamic> upload =
+                    snapshot.data as Map<String, dynamic>;
                 return Card(
                   elevation: 0,
                   child: Column(
@@ -99,10 +108,19 @@ class FeedPageState extends State<FeedPage> {
                         mainAxisSize: MainAxisSize.max,
                         children: [
                           IconButton(
-                            onPressed: () {
-                              print('Star');
+                            onPressed: () async {
+                              await widget.firebase
+                                  .setLikeDatabase(
+                                      widget.uploadDocumentId.toString())
+                                  .then((value) {
+                                setState(() {
+                                  asLiked = value;
+                                });
+                              });
                             },
-                            icon: const Icon(Icons.star_border),
+                            icon: asLiked
+                                ? Icon(Icons.star)
+                                : Icon(Icons.star_border),
                           ),
                           IconButton(
                             onPressed: () {
@@ -113,11 +131,17 @@ class FeedPageState extends State<FeedPage> {
                           //icone para multiplas fotos fica por aqui
                           Spacer(),
                           IconButton(
-                            onPressed: (){
-                                widget.firebase.setSaveToUser(widget.uploadDocumentId.toString());
-                                setState(() {});
+                            onPressed: () async {
+                              await widget.firebase.setSaveToUser(
+                                  widget.uploadDocumentId.toString());
+                              setState(() {
+                                asSaved = widget.firebase.asSaved(
+                                    widget.uploadDocumentId.toString());
+                              });
                             },
-                            icon: widget.firebase.asSaved(widget.uploadDocumentId.toString()) ? Icon(Icons.save) : Icon(Icons.save_outlined),
+                            icon: asSaved
+                                ? Icon(Icons.save)
+                                : Icon(Icons.save_outlined),
                           ),
                         ],
                       ),
@@ -126,10 +150,12 @@ class FeedPageState extends State<FeedPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(upload['likes'].toString()+' curtidas'),
+                            Text(upload['liked-by'].length.toString() +
+                                ' curtidas'),
                             Text(widget.firebase
-                                .getLoggedUserCollection()?[
-                            'username']+' '+upload['description']),
+                                    .getLoggedUserCollection()?['username'] +
+                                ' ' +
+                                upload['description']),
                             Text('Ver Comentarios'),
                             Row(
                               children: [
@@ -186,8 +212,8 @@ class FeedPageState extends State<FeedPage> {
     print(a);
     Future<String> futuro = widget.firebase.getUrlFromUploadedImage(a);
     return FutureBuilder(
-      future: futuro,
-        builder: (context,snapshot){
+        future: futuro,
+        builder: (context, snapshot) {
           return Container(
             height: MediaQuery.of(context).size.height * 0.65,
             decoration: BoxDecoration(
@@ -198,6 +224,6 @@ class FeedPageState extends State<FeedPage> {
               ),
             ),
           );
-    });
+        });
   }
 }

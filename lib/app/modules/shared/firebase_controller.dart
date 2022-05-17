@@ -113,21 +113,24 @@ class FirebaseController {
         .then((value) async {
       if (value['saves'] != null) {
         for (final i in value['saves']) {
-          if (id == i) {//mecher aqui
+          if (id == i) {
+            //mecher aqui
+            print('inside');
             await _firestore.collection('users').doc(_authUser?.uid).update({
               'saves': FieldValue.arrayRemove([id])
-            }).whenComplete((){
+            }).whenComplete(() {
               _userCollection['saves'].removeWhere((item) => item == id);
             });
+            return;
           }
         }
         await _firestore.collection('users').doc(_authUser?.uid).update({
           'saves': FieldValue.arrayUnion([id])
+        }).whenComplete(() {
+          _userCollection['saves'].add(id);
         });
+        return;
       }
-    });
-    await _firestore.collection('users').doc(_authUser?.uid).update({
-      'saves': FieldValue.arrayUnion([id])
     });
   }
 
@@ -137,6 +140,48 @@ class FirebaseController {
         return true;
       }
     }
+    return false;
+  }
+
+  Future<bool> setLikeDatabase(String id) async {
+    return await _firestore
+        .collection('uploads')
+        .doc(id)
+        .get()
+        .then((value) async {
+      if (value['liked-by'] != null) {
+        for (final i in value['liked-by']) {
+          if (_authUser?.uid == i) {
+            //mecher aqui
+            await _firestore.collection('uploads').doc(id).update({
+              'liked-by': FieldValue.arrayRemove([_authUser?.uid])
+            });
+            print('false');
+            return false;
+          }
+        }
+        await _firestore.collection('uploads').doc(id).update({
+          'liked-by': FieldValue.arrayUnion([_authUser?.uid])
+        });
+        print('final');
+        return true;
+      }
+      return false;
+    });
+  }
+
+  Future<bool> asLiked(String uploadId) async {
+    await _firestore
+        .collection('uploads')
+        .doc(uploadId)
+        .get()
+        .then((value) async {
+      for (final i in value['liked-by']) {
+        if (_authUser?.uid == i) {
+          return true;
+        }
+      }
+    });
     return false;
   }
 
