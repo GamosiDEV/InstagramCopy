@@ -40,7 +40,7 @@ class FirebaseController {
     return _uploadsFromUser;
   }
 
-  List<Map>? getSavedsFromUser(){
+  List<Map>? getSavedsFromUser() {
     return _savedsFromUser;
   }
 
@@ -102,6 +102,7 @@ class FirebaseController {
     await _firestore.collection('users').doc(_authUser?.uid).update({
       'uploads': FieldValue.arrayUnion([id])
     });
+    getUploadsFromLoggedUser();
   }
 
   Future<void> setSaveToUser(String id) async {
@@ -237,6 +238,10 @@ class FirebaseController {
     return await _storage.ref(reference).getDownloadURL();
   }
 
+  Future<String> getUrlFromProfileImage(String reference) async {
+    return await _storage.ref(reference+'profile').getDownloadURL();
+  }
+
   Future<void> setCollectionOfLoggedUser(
       Map<String, dynamic> userCollection) async {
     await _firestore
@@ -279,5 +284,33 @@ class FirebaseController {
     uploadsId = [];
     savedsId = [];
     _savedsFromUser?.clear();
+  }
+
+  Future<List> getListOfFollowerIdsByUserId(String? userId) async {
+    return await _firestore.collection('users').doc(userId).get().then((value) {
+      return value['followers'];
+    });
+  }
+
+  Future<List<Map>> getFollowersFromLoggedUser() async {
+    print('292');
+    List listOfFollowerIds = [];
+    await getListOfFollowerIdsByUserId(_authUser?.uid).then((value) {
+      listOfFollowerIds = value;
+      print(listOfFollowerIds);
+    });
+
+    List<Map> dataOfFollowers = [];
+    await _firestore.collection('users').get().then((value) {
+      for (final followerId in listOfFollowerIds) {
+        for (final document in value.docs) {
+          if (followerId == document.id) {
+            dataOfFollowers.add(document.data());
+          }
+        }
+      }
+    });
+    print(dataOfFollowers);
+    return dataOfFollowers;
   }
 }

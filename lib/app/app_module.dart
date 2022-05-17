@@ -2,6 +2,7 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:instagram_copy/app/modules/profile/feed/feed_module.dart';
 
 import 'modules/post/post_module.dart';
+import 'modules/profile/follow/follow_module.dart';
 import 'modules/profile/profile_module.dart';
 import 'modules/profile/editor/editor_module.dart';
 import 'modules/auth/auth_module.dart';
@@ -23,6 +24,7 @@ class AppModule extends Module {
     ModuleRoute('/profile/', module: ProfileModule()),
     ModuleRoute('/profile/editor/', module: EditorModule()),
     ModuleRoute('/profile/feed', module: FeedModule()),
+    ModuleRoute('/profile/follow', module: FollowModule()),
     ModuleRoute('/post/', module: PostModule()),
 
   ];

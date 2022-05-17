@@ -33,6 +33,8 @@ class ProfilePageState extends State<ProfilePage> {
   int indexOfSelectedTab = 1;
   int _postNumber = 0;
   int _savedNumber = 0;
+  int _followerNumbers = 0;
+  int _followedNumbers = 0;
   final List<String> pages = <String>[
     '/home/',
     '/profile/',
@@ -66,7 +68,9 @@ class ProfilePageState extends State<ProfilePage> {
               await Modular.to
                   .pushNamed('/post/', arguments: widget.firebase)
                   .then((value) {
-                _refresh();
+                setState(() {
+                  _refresh();
+                });
               });
             }, //adicionar foto
           ),
@@ -151,6 +155,10 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   Widget createProfileScreen(BuildContext context, AsyncSnapshot snapshot) {
+    _followerNumbers =
+        widget.firebase.getLoggedUserCollection()?['followers'].length;
+    _followedNumbers =
+        widget.firebase.getLoggedUserCollection()?['followeds'].length;
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -183,33 +191,55 @@ class ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               Spacer(),
-              Container(
-                padding: EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      '0',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              GestureDetector(
+                onTap: (){//enviar um sinalizador para abrir diretamente na aba de seguidores
+                  Modular.to
+                      .pushNamed('/profile/follow/',arguments: widget.firebase)
+                      .whenComplete(() {
+                        print('execução ao retornar da pagina de seguidores');
+                  });
+                },
+                child: SizedBox(
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          _followerNumbers.toString(),
+                          style:
+                              TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
+                        const Text('Seguidores')
+                      ],
                     ),
-                    const Text('Seguidores')
-                  ],
+                  ),
                 ),
               ),
               Spacer(),
-              Container(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      '0',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              GestureDetector(
+                onTap: (){//enviar um sinalizador para abrir diretamente na aba de seguido
+                  Modular.to
+                      .pushNamed('/profile/follow/',arguments: widget.firebase)
+                      .whenComplete(() {
+                    print('execução ao retornar da pagina de seguidores');
+                  });
+                },
+                child: SizedBox(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          _followedNumbers.toString(),
+                          style:
+                              TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
+                        const Text('Seguindo')
+                      ],
                     ),
-                    const Text('Seguindo')
-                  ],
+                  ),
                 ),
               ),
             ],
