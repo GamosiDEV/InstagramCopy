@@ -10,6 +10,12 @@ class FollowModule extends Module {
 
   @override
   final List<ModularRoute> routes = [
-    ChildRoute(Modular.initialRoute, child: (_, args) => FollowPage(firebase: args.data)),
+    ChildRoute(
+      Modular.initialRoute,
+      child: (_, args) => FollowPage(
+        firebase: args.data,
+        userId: args.queryParams['userId'],
+      ),
+    ),
   ];
 }

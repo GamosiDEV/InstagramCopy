@@ -224,7 +224,7 @@ class FirebaseController {
   }
 
   Future<String> getUrlFromProfileImage(String reference) async {
-    return await _storage.ref(reference+'profile').getDownloadURL();
+    return await _storage.ref(reference + 'profile').getDownloadURL();
   }
 
   Future<void> setCollectionOfLoggedUser(
@@ -277,7 +277,8 @@ class FirebaseController {
     });
   }
 
-  Future<List<Map>> getFollowersFromUserById(String? userId) async {
+  Future<List<Map>> getSearchedFollowersFromUserById(
+      String? userId, String query) async {
     List listOfFollowerIds = [];
     await getListOfFollowerIdsByUserId(userId).then((value) {
       listOfFollowerIds = value;
@@ -288,12 +289,25 @@ class FirebaseController {
       for (final followerId in listOfFollowerIds) {
         for (final document in value.docs) {
           if (followerId == document.id) {
-            Map<String,dynamic> map = document.data();
-            await getUrlFromProfileImage(document.data()['profile-image-reference'])
-                .then((value) {
+            Map<String, dynamic> map = document.data();
+            if (query != null && query != '') {
+              if (document.data()['username'].contains(query) ||
+                  document.data()['fullname'].contains(query)) {
+                await getUrlFromProfileImage(
+                        document.data()['profile-image-reference'])
+                    .then((value) {
                   map.addAll({'url': value});
-            });
-            dataOfFollowers.add(map);
+                });
+                dataOfFollowers.add(map);
+              }
+            } else {
+              await getUrlFromProfileImage(
+                      document.data()['profile-image-reference'])
+                  .then((value) {
+                map.addAll({'url': value});
+              });
+              dataOfFollowers.add(map);
+            }
           }
         }
       }
@@ -307,7 +321,8 @@ class FirebaseController {
     });
   }
 
-  Future<List<Map>> getFollowedsFromUserById(String? userId) async {
+  Future<List<Map>> getSearchedFollowedsFromUserById(
+      String? userId, String query) async {
     List listOfFollowedIds = [];
     await getListOfFollowedIdsByUserId(userId).then((value) {
       listOfFollowedIds = value;
@@ -318,12 +333,25 @@ class FirebaseController {
       for (final followedId in listOfFollowedIds) {
         for (final document in value.docs) {
           if (followedId == document.id) {
-            Map<String,dynamic> map = document.data();
-            await getUrlFromProfileImage(document.data()['profile-image-reference'])
-                .then((value) {
-              map.addAll({'url': value});
-            });
-            dataOfFolloweds.add(map);
+            Map<String, dynamic> map = document.data();
+            if (query != null && query != '') {
+              if (document.data()['username'].contains(query) ||
+                  document.data()['fullname'].contains(query)) {
+                await getUrlFromProfileImage(
+                        document.data()['profile-image-reference'])
+                    .then((value) {
+                  map.addAll({'url': value});
+                });
+                dataOfFolloweds.add(map);
+              }
+            } else {
+              await getUrlFromProfileImage(
+                      document.data()['profile-image-reference'])
+                  .then((value) {
+                map.addAll({'url': value});
+              });
+              dataOfFolloweds.add(map);
+            }
           }
         }
       }

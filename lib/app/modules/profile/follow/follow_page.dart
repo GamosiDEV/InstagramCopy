@@ -10,9 +10,14 @@ class FollowPage extends StatefulWidget {
   final String title;
   final FirebaseController firebase;
 
-  const FollowPage(
-      {Key? key, this.title = 'Nome de usuario', required this.firebase})
-      : super(key: key);
+  final String? userId;
+
+  const FollowPage({
+    Key? key,
+    this.title = 'Instacopy',
+    required this.firebase,
+    required this.userId,
+  }) : super(key: key);
 
   @override
   FollowPageState createState() => FollowPageState();
@@ -22,30 +27,42 @@ class FollowPageState extends State<FollowPage> {
   final FollowStore store = Modular.get();
   int _followerNumbers = 0;
   int _followedNumbers = 0;
+  int totalFollowers = 0;
+  int totalFolloweds = 0;
 
-  late final dataOfFollowers;
-  late final dataOfFolloweds;
+  late Future<List<Map>> dataOfFollowers;
+  late Future<List<Map>> dataOfFolloweds;
 
-  TextEditingController _searchTextFromFollowersController = TextEditingController();
-  TextEditingController _searchTextFromFollowedController = TextEditingController();
+  TextEditingController _searchTextFromFollowersController =
+      TextEditingController();
+  TextEditingController _searchTextFromFollowedController =
+      TextEditingController();
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    //metodo
-    _followerNumbers =
+    totalFollowers =
         widget.firebase.getLoggedUserCollection()?['followers'].length;
-    _followedNumbers =
+    totalFolloweds =
         widget.firebase.getLoggedUserCollection()?['followeds'].length;
-    dataOfFollowers = widget.firebase
-        .getFollowersFromUserById(widget.firebase.getAuthUser()?.uid);
-    dataOfFolloweds = widget.firebase
-        .getFollowedsFromUserById(widget.firebase.getAuthUser()?.uid);
+    reloadFollowers('');
+    reloadFolloweds('');
+  }
+
+  void reloadFollowers(String query) {
+    dataOfFollowers = widget.firebase.getSearchedFollowersFromUserById(
+        widget.userId, query);
+  }
+
+  void reloadFolloweds(String query) {
+    dataOfFolloweds = widget.firebase.getSearchedFollowedsFromUserById(
+        widget.userId, query);
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -63,10 +80,10 @@ class FollowPageState extends State<FollowPage> {
                 tabs: [
                   //widget.firebase.getLoggedUserCollection()['followers'].lenght.toString()
                   Tab(
-                    text: _followerNumbers.toString() + ' Seguidores',
+                    text: totalFollowers.toString() + ' Seguidores',
                   ),
                   Tab(
-                    text: _followedNumbers.toString() + ' Seguindo',
+                    text: totalFolloweds.toString() + ' Seguindo',
                   )
                 ],
               ),
@@ -98,6 +115,7 @@ class FollowPageState extends State<FollowPage> {
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               List<Map> list = snapshot.data as List<Map>;
+              _followerNumbers = list.length;
               return Container(
                 child: Column(
                   children: [
@@ -105,6 +123,18 @@ class FollowPageState extends State<FollowPage> {
                       padding: const EdgeInsets.all(8.0),
                       child: CupertinoSearchTextField(
                         controller: _searchTextFromFollowersController,
+                        onSubmitted: (value) {
+                          setState(() {
+                            reloadFollowers(value);
+                          });
+                        },
+                        onChanged: (value) {
+                          if (value == null || value == '') {
+                            setState(() {
+                              reloadFollowers(value);
+                            });
+                          }
+                        },
                       ),
                     ),
                     Expanded(
@@ -170,6 +200,7 @@ class FollowPageState extends State<FollowPage> {
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               List<Map> list = snapshot.data as List<Map>;
+              _followedNumbers = list.length;
               return Container(
                 child: Column(
                   children: [
@@ -177,6 +208,18 @@ class FollowPageState extends State<FollowPage> {
                       padding: const EdgeInsets.all(8.0),
                       child: CupertinoSearchTextField(
                         controller: _searchTextFromFollowedController,
+                        onSubmitted: (value) {
+                          setState(() {
+                            reloadFolloweds(value);
+                          });
+                        },
+                        onChanged: (value) {
+                          if (value == null || value == '') {
+                            setState(() {
+                              reloadFolloweds(value);
+                            });
+                          }
+                        },
                       ),
                     ),
                     Expanded(

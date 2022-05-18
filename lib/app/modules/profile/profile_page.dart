@@ -133,7 +133,7 @@ class ProfilePageState extends State<ProfilePage> {
           ),
         ],
         currentIndex: _currentIndex,
-        onTap: onBottomNavigationBarItemTapped,
+        onTap:onBottomNavigationBarItemTapped,
       ),
     );
   }
@@ -194,7 +194,7 @@ class ProfilePageState extends State<ProfilePage> {
               GestureDetector(
                 onTap: (){//enviar um sinalizador para abrir diretamente na aba de seguidores
                   Modular.to
-                      .pushNamed('/profile/follow/',arguments: widget.firebase)
+                      .pushNamed('/profile/follow/?userId='+widget.firebase.getAuthUser()!.uid,arguments: widget.firebase,)
                       .whenComplete(() {
                         print('execução ao retornar da pagina de seguidores');
                   });
@@ -220,7 +220,7 @@ class ProfilePageState extends State<ProfilePage> {
               GestureDetector(
                 onTap: (){//enviar um sinalizador para abrir diretamente na aba de seguido
                   Modular.to
-                      .pushNamed('/profile/follow/',arguments: widget.firebase)
+                      .pushNamed('/profile/follow/?userId='+widget.firebase.getAuthUser()!.uid,arguments: widget.firebase)
                       .whenComplete(() {
                     print('execução ao retornar da pagina de seguidores');
                   });
