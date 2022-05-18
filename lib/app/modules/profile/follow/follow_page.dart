@@ -24,8 +24,10 @@ class FollowPageState extends State<FollowPage> {
   int _followedNumbers = 0;
 
   late final dataOfFollowers;
+  late final dataOfFolloweds;
 
-  TextEditingController _searchTextController = TextEditingController();
+  TextEditingController _searchTextFromFollowersController = TextEditingController();
+  TextEditingController _searchTextFromFollowedController = TextEditingController();
 
   @override
   void initState() {
@@ -36,7 +38,10 @@ class FollowPageState extends State<FollowPage> {
         widget.firebase.getLoggedUserCollection()?['followers'].length;
     _followedNumbers =
         widget.firebase.getLoggedUserCollection()?['followeds'].length;
-    dataOfFollowers = widget.firebase.getFollowersFromLoggedUser();
+    dataOfFollowers = widget.firebase
+        .getFollowersFromUserById(widget.firebase.getAuthUser()?.uid);
+    dataOfFolloweds = widget.firebase
+        .getFollowedsFromUserById(widget.firebase.getAuthUser()?.uid);
   }
 
   @override
@@ -99,17 +104,14 @@ class FollowPageState extends State<FollowPage> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: CupertinoSearchTextField(
-                        controller: _searchTextController,
+                        controller: _searchTextFromFollowersController,
                       ),
                     ),
                     Expanded(
                       child: ListView.builder(
                         physics: AlwaysScrollableScrollPhysics(),
                         itemCount: _followerNumbers,
-                        itemBuilder: (context, index) {//aqui
-                          String url = '';
-                            url = getUrlFromImage(list
-                                .elementAt(index)['profile-image-reference']);
+                        itemBuilder: (context, index) {
                           return Padding(
                             padding: EdgeInsets.all(8.0),
                             child: Container(
@@ -120,7 +122,8 @@ class FollowPageState extends State<FollowPage> {
                                     child: ClipOval(
                                       child: SizedBox.fromSize(
                                         size: Size.fromRadius(32),
-                                        child: getCurrentProfileImage(url),
+                                        child: getCurrentProfileImage(
+                                            list.elementAt(index)['url']),
                                       ),
                                     ),
                                   ),
@@ -163,26 +166,80 @@ class FollowPageState extends State<FollowPage> {
           },
         ),
         FutureBuilder(
-          future: null,
+          future: dataOfFolloweds,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              return Column();
+              List<Map> list = snapshot.data as List<Map>;
+              return Container(
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: CupertinoSearchTextField(
+                        controller: _searchTextFromFollowedController,
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        physics: AlwaysScrollableScrollPhysics(),
+                        itemCount: _followedNumbers,
+                        itemBuilder: (context, index) {
+                          //aqui
+                          return Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Container(
+                              child: Row(
+                                children: [
+                                  Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: ClipOval(
+                                      child: SizedBox.fromSize(
+                                        size: Size.fromRadius(32),
+                                        child: getCurrentProfileImage(
+                                            list.elementAt(index)['url']),
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    //Alinhar texto a esquerda
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          list.elementAt(index)['username'],
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        // apos o nome de usuario colocar um ponto e um botão para seguir
+                                        Text(list.elementAt(index)['fullname']),
+                                      ],
+                                    ),
+                                  ),
+                                  Spacer(),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: ElevatedButton(
+                                      onPressed: () {},
+                                      child: Text('Seguindo'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                  ],
+                ),
+              );
             }
             return progressIndicator();
           },
-        ),
+        )
       ],
     );
-  }
-
-  String getUrlFromImage(String ref){
-    String url = '';
-
-    widget.firebase.getUrlFromProfileImage(ref).then((value) {
-      url = value;
-      print(url);
-    });
-    return url;
   }
 
   Widget getCurrentProfileImage(String url) {
@@ -203,4 +260,3 @@ class FollowPageState extends State<FollowPage> {
     );
   }
 }
-//return progressIndicator();

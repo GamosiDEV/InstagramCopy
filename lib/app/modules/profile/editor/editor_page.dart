@@ -41,6 +41,8 @@ class EditorPageState extends State<EditorPage> {
   String profileImagePath = '';
   String profileImageUrl = '';
 
+  Map<String, dynamic>? userData;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -216,7 +218,8 @@ class EditorPageState extends State<EditorPage> {
 
   void getLoggedUser() {
     //update logged user info
-    setFieldsWithLoggedUser(widget.firebase.getLoggedUserCollection());
+    userData = widget.firebase.getLoggedUserCollection()?.cast<String, dynamic>() ;
+    setFieldsWithLoggedUser();
     // _auth.authStateChanges().listen((user) async {
     //   if (user != null) {
     //     await FirebaseFirestore.instance
@@ -230,19 +233,19 @@ class EditorPageState extends State<EditorPage> {
     // });
   }
 
-  void setFieldsWithLoggedUser(Map? user) {
-    if (user != null) {
+  void setFieldsWithLoggedUser() {
+    if (userData != null) {
       setState(() {
-        usernameController.text = user['username'];
-        if (user['fullname'] != null)
-          fullnameController.text = user['fullname'];
-        if (user['genere'] != null) genereController.text = user['genere'];
-        if (user['bio'] != null) bioController.text = user['bio'];
-        if (user['links'] != null) linksController.text = user['links'];
-        if (user['birth-date'] != null)
-          birthController.text = user['birth-date'];
-        if (user['profile-image-reference'] != null) {
-          getUrlFromProfileImage(user['profile-image-reference']).then((value) {
+        usernameController.text = userData?['username'];
+        if (userData!['fullname'] != null)
+          fullnameController.text = userData?['fullname'];
+        if (userData!['genere'] != null) genereController.text = userData?['genere'];
+        if (userData!['bio'] != null) bioController.text = userData?['bio'];
+        if (userData!['links'] != null) linksController.text = userData?['links'];
+        if (userData!['birth-date'] != null)
+          birthController.text = userData!['birth-date'];
+        if (userData!['profile-image-reference'] != null) {
+          getUrlFromProfileImage(userData!['profile-image-reference']).then((value) {
             setState(() {
               profileImageUrl = value;
             });
@@ -259,26 +262,23 @@ class EditorPageState extends State<EditorPage> {
   }
 
   void saveChanges() async {
-    Map<String, dynamic> updatedUserData = {
-      "username": usernameController.text,
-    };
+    userData?.update('username', (value) => usernameController.text);
     if (fullnameController.text != null && fullnameController.text != '')
-      updatedUserData.addAll({'fullname': fullnameController.text});
+      userData?.update('fullname', (value) => fullnameController.text);
     if (genereController.text != null && genereController.text != '')
-      updatedUserData.addAll({'genere': genereController.text});
+      userData?.update('genere', (value) => genereController.text);
     if (bioController.text != null && bioController.text != '')
-      updatedUserData.addAll({'bio': bioController.text});
+      userData?.update('bio', (value) => bioController.text);
     if (linksController.text != null && linksController.text != '')
-      updatedUserData.addAll({'links': linksController.text});
+      userData?.update('links', (value) => linksController.text);
     if (birthController.text != null && birthController.text != '')
-      updatedUserData.addAll({'birth-date': birthController.text});
+      userData?.update('birth-date', (value) => birthController.text);
     if (profileImageReference != null && profileImageReference != '') {
-      updatedUserData
-          .addAll({'profile-image-reference': profileImageReference});
+      userData?.update('profile-image-reference', (value) => profileImageReference);
       uploadSelectedImage();
     }
 
-    widget.firebase.setCollectionOfLoggedUser(updatedUserData);
+    widget.firebase.setCollectionOfLoggedUser(userData!);
     Modular.to.pop();
   }
 

@@ -59,9 +59,7 @@ class FirebaseController {
   }
 
   Future<void> uploadPost(File image, Map<String, dynamic> upload) async {
-    print("uploadPost");
     sendUploadToStorage(image).then((value) {
-      print("upload post .then");
       upload.addAll({"upload-storage-reference": value});
       sendUploadToFirestore(upload);
     });
@@ -74,16 +72,10 @@ class FirebaseController {
   }
 
   Future<String> sendUploadToStorage(File image) async {
-    print("sendUploadToStorage");
     await _storage
         .ref(_userCollection['profile-image-reference'] + 'uploaded/')
         .child(image.path.split('/').last)
         .putFile(image);
-    print("----");
-    print(_userCollection['profile-image-reference'] +
-        'uploaded/' +
-        image.path.split('/').last +
-        '/');
     return _userCollection['profile-image-reference'] +
         'uploaded/' +
         image.path.split('/').last +
@@ -91,9 +83,7 @@ class FirebaseController {
   }
 
   Future<void> sendUploadToFirestore(Map<String, dynamic> upload) async {
-    print("SendUploadToFirestore");
     await _firestore.collection('uploads').add(upload).then((value) {
-      print(value.id);
       setUploadToUser(value.id);
     });
   }
@@ -114,8 +104,6 @@ class FirebaseController {
       if (value['saves'] != null) {
         for (final i in value['saves']) {
           if (id == i) {
-            //mecher aqui
-            print('inside');
             await _firestore.collection('users').doc(_authUser?.uid).update({
               'saves': FieldValue.arrayRemove([id])
             }).whenComplete(() {
@@ -157,14 +145,12 @@ class FirebaseController {
             await _firestore.collection('uploads').doc(id).update({
               'liked-by': FieldValue.arrayRemove([_authUser?.uid])
             });
-            print('false');
             return false;
           }
         }
         await _firestore.collection('uploads').doc(id).update({
           'liked-by': FieldValue.arrayUnion([_authUser?.uid])
         });
-        print('final');
         return true;
       }
       return false;
@@ -218,7 +204,6 @@ class FirebaseController {
       }
       _savedsFromUser = listSaved;
     });
-    print('getsavedsFromLoggedUser');
   }
 
   Future<Map<String, dynamic>> getDocumentOfUploadedImage(
@@ -292,25 +277,57 @@ class FirebaseController {
     });
   }
 
-  Future<List<Map>> getFollowersFromLoggedUser() async {
-    print('292');
+  Future<List<Map>> getFollowersFromUserById(String? userId) async {
     List listOfFollowerIds = [];
-    await getListOfFollowerIdsByUserId(_authUser?.uid).then((value) {
+    await getListOfFollowerIdsByUserId(userId).then((value) {
       listOfFollowerIds = value;
-      print(listOfFollowerIds);
     });
 
-    List<Map> dataOfFollowers = [];
-    await _firestore.collection('users').get().then((value) {
+    List<Map<String, dynamic>> dataOfFollowers = [];
+    await _firestore.collection('users').get().then((value) async {
       for (final followerId in listOfFollowerIds) {
         for (final document in value.docs) {
           if (followerId == document.id) {
-            dataOfFollowers.add(document.data());
+            Map<String,dynamic> map = document.data();
+            await getUrlFromProfileImage(document.data()['profile-image-reference'])
+                .then((value) {
+                  map.addAll({'url': value});
+            });
+            dataOfFollowers.add(map);
           }
         }
       }
     });
-    print(dataOfFollowers);
     return dataOfFollowers;
+  }
+
+  Future<List> getListOfFollowedIdsByUserId(String? userId) async {
+    return await _firestore.collection('users').doc(userId).get().then((value) {
+      return value['followeds'];
+    });
+  }
+
+  Future<List<Map>> getFollowedsFromUserById(String? userId) async {
+    List listOfFollowedIds = [];
+    await getListOfFollowedIdsByUserId(userId).then((value) {
+      listOfFollowedIds = value;
+    });
+
+    List<Map<String, dynamic>> dataOfFolloweds = [];
+    await _firestore.collection('users').get().then((value) async {
+      for (final followedId in listOfFollowedIds) {
+        for (final document in value.docs) {
+          if (followedId == document.id) {
+            Map<String,dynamic> map = document.data();
+            await getUrlFromProfileImage(document.data()['profile-image-reference'])
+                .then((value) {
+              map.addAll({'url': value});
+            });
+            dataOfFolloweds.add(map);
+          }
+        }
+      }
+    });
+    return dataOfFolloweds;
   }
 }

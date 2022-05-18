@@ -127,10 +127,16 @@ class SignInPageState extends State<SignInPage> {
           "email": user.email,
           "username": _username,
           "bio": '',
-          "birth-date": '',
+          "birth-date": DateTime.now(),
           "fullname": '',
           "genere": '',
           "links": '',
+          "followeds": [],
+          "followers": [],
+          "likes": [],
+          "saves": [],
+          "uploads": [],
+          "profile-image-reference": '',
         };
 
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set(map);
