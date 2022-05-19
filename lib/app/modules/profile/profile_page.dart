@@ -14,10 +14,14 @@ import 'dart:math' as math;
 class ProfilePage extends StatefulWidget {
   final String title;
   final FirebaseController firebase;
+  final String? profileUserId;
 
-  const ProfilePage(
-      {Key? key, this.title = '@username e botões', required this.firebase})
-      : super(key: key);
+  const ProfilePage({
+    Key? key,
+    this.title = '@username e botões',
+    required this.profileUserId,
+    required this.firebase,
+  }) : super(key: key);
 
   @override
   ProfilePageState createState() => ProfilePageState();
@@ -40,24 +44,31 @@ class ProfilePageState extends State<ProfilePage> {
     '/profile/',
   ];
 
+  Map<String, dynamic> user = {};
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-
-    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
-      _refresh();
+    widget.firebase
+        .getCollectionOfUserById(widget.profileUserId.toString()).then((value){
+          setState(() {
+            usernameText = value['username'];
+          });
     });
+
+    WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {});
   }
 
   void _refresh() {
-    setUsername(widget.firebase.getLoggedUserCollection()?['username']);
-    _postNumber = widget.firebase.getUploadsFromUser()!.length;
-    _savedNumber = widget.firebase.getSavedsFromUser()!.length;
+    _postNumber = user['uploads'].length;
+    _savedNumber = user['saves'].length;
+
   }
 
   @override
   Widget build(BuildContext context) {
+    print(widget.profileUserId);
     return Scaffold(
       appBar: AppBar(
         title: Text(usernameText),
@@ -84,9 +95,14 @@ class ProfilePageState extends State<ProfilePage> {
         height: double.infinity,
         width: double.infinity,
         child: FutureBuilder(
-          future: reloadDataFromLoggedUser(),
+          future: widget.firebase
+              .getCollectionOfUserById(widget.profileUserId.toString()),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
+              user = snapshot.data as Map<String, dynamic>;
+
+              print(usernameText);
+              _refresh();
               return DefaultTabController(
                 length: 2,
                 child: NestedScrollView(
@@ -133,7 +149,7 @@ class ProfilePageState extends State<ProfilePage> {
           ),
         ],
         currentIndex: _currentIndex,
-        onTap:onBottomNavigationBarItemTapped,
+        onTap: onBottomNavigationBarItemTapped,
       ),
     );
   }
@@ -155,10 +171,8 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   Widget createProfileScreen(BuildContext context, AsyncSnapshot snapshot) {
-    _followerNumbers =
-        widget.firebase.getLoggedUserCollection()?['followers'].length;
-    _followedNumbers =
-        widget.firebase.getLoggedUserCollection()?['followeds'].length;
+    _followerNumbers = user['followers'].length;
+    _followedNumbers = user['followeds'].length;
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -192,11 +206,15 @@ class ProfilePageState extends State<ProfilePage> {
               ),
               Spacer(),
               GestureDetector(
-                onTap: (){
+                onTap: () {
                   Modular.to
-                      .pushNamed('/profile/follow/?userId='+widget.firebase.getAuthUser()!.uid,arguments: widget.firebase,)
+                      .pushNamed(
+                    '/profile/follow/?userId=' +
+                        widget.profileUserId.toString(),
+                    arguments: widget.firebase,
+                  )
                       .whenComplete(() {
-                        print('execução ao retornar da pagina de seguidores');
+                    print('execução ao retornar da pagina de seguidores');
                   });
                 },
                 child: SizedBox(
@@ -207,8 +225,8 @@ class ProfilePageState extends State<ProfilePage> {
                       children: [
                         Text(
                           _followerNumbers.toString(),
-                          style:
-                              TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 18),
                         ),
                         const Text('Seguidores')
                       ],
@@ -218,9 +236,13 @@ class ProfilePageState extends State<ProfilePage> {
               ),
               Spacer(),
               GestureDetector(
-                onTap: (){//enviar um sinalizador para abrir diretamente na aba de seguido
+                onTap: () {
+                  //enviar um sinalizador para abrir diretamente na aba de seguido
                   Modular.to
-                      .pushNamed('/profile/follow/?userId='+widget.firebase.getAuthUser()!.uid,arguments: widget.firebase)
+                      .pushNamed(
+                          '/profile/follow/?userId=' +
+                              widget.firebase.getAuthUser()!.uid,
+                          arguments: widget.firebase)
                       .whenComplete(() {
                     print('execução ao retornar da pagina de seguidores');
                   });
@@ -233,8 +255,8 @@ class ProfilePageState extends State<ProfilePage> {
                       children: [
                         Text(
                           _followedNumbers.toString(),
-                          style:
-                              TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 18),
                         ),
                         const Text('Seguindo')
                       ],
@@ -252,9 +274,7 @@ class ProfilePageState extends State<ProfilePage> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Text(
-                  snapshot.data['fullname'] != null
-                      ? snapshot.data['fullname']
-                      : '',
+                  user['fullname'] != null ? user['fullname'] : '',
                   textAlign: TextAlign.start,
                   style: TextStyle(
                     fontSize: 16,
@@ -262,13 +282,13 @@ class ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
                 Text(
-                  snapshot.data['bio'] != null ? snapshot.data['bio'] : '',
+                  user['bio'] != null ? user['bio'] : '',
                   style: TextStyle(fontSize: 16),
                 )
               ],
             ),
           ),
-          Container(
+          widget.profileUserId == widget.firebase.getAuthUser()?.uid ? Container(
             padding: EdgeInsets.all(8.0),
             width: double.infinity,
             child: ElevatedButton(
@@ -276,7 +296,7 @@ class ProfilePageState extends State<ProfilePage> {
                 await Modular.to
                     .pushNamed('/profile/editor/', arguments: widget.firebase)
                     .then((value) {
-                      _refresh();
+                  _refresh();
                 });
               },
               child: Text(
@@ -284,121 +304,156 @@ class ProfilePageState extends State<ProfilePage> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
+          ) : Container(
+            //botão para seguir vai aqui=====================================================================================
           ),
-          //Abas para minhas fotos postadas e meus marcados
-          //grid para mostrar as fotos
         ],
       ),
     );
   }
 
   Widget generateTabBarView(BuildContext context, AsyncSnapshot snapshot) {
+    // List<Map<String, dynamic>>? userUploads = [];
+    //
+    //     .then((value) {
+    //         userUploads = value;
+    //         print(userUploads);
+    // });
     return TabBarView(
       children: [
-        GridView.builder(
-          padding: EdgeInsets.zero,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3, crossAxisSpacing: 2.0, mainAxisSpacing: 2.0),
-          itemCount: _postNumber,
-          itemBuilder: (context, index) {
-            List<Map>? userUploads = widget.firebase.getUploadsFromUser();
-            if (userUploads != null) {
-              userUploads.sort((m1, m2) =>
-                  m2["upload-date-time"].compareTo(m1["upload-date-time"]));
-              _postNumber = userUploads.length;
-              if (index < userUploads.length) {
-                Future<String> futuro = widget.firebase.getUrlFromUploadedImage(
-                    userUploads.elementAt(index)['upload-storage-reference']);
-                return FutureBuilder(
-                  future: futuro,
-                  builder: (context, snapshot) {
-                    if (snapshot.data != null) {
-                      return GestureDetector(
-                        child: SizedBox(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                fit: BoxFit.fitWidth,
-                                alignment: FractionalOffset.center,
-                                image: NetworkImage(snapshot.data.toString()),
+        FutureBuilder(
+            future: widget.firebase
+                .getUploadsFromUserByListOfUploadIds(user['uploads']),
+            builder: (context, snapshot) {
+              List<Map<String, dynamic>>? userUploads =
+                  snapshot.data as List<Map<String, dynamic>>?;
+              return GridView.builder(
+                padding: EdgeInsets.zero,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 2.0,
+                    mainAxisSpacing: 2.0),
+                itemCount: _postNumber,
+                itemBuilder: (context, index) {
+                  if (userUploads != null) {
+                    userUploads.sort((m1, m2) => m2["upload-date-time"]
+                        .compareTo(m1["upload-date-time"]));
+                    _postNumber = userUploads.length;
+                    if (index < userUploads.length) {
+                      Future<String> futuro = widget.firebase
+                          .getUrlFromUploadedImage(userUploads
+                              .elementAt(index)['upload-storage-reference']);
+                      return FutureBuilder(
+                        future: futuro,
+                        builder: (context, snapshot) {
+                          if (snapshot.data != null) {
+                            return GestureDetector(
+                              child: SizedBox(
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    image: DecorationImage(
+                                      fit: BoxFit.fitWidth,
+                                      alignment: FractionalOffset.center,
+                                      image: NetworkImage(
+                                          snapshot.data.toString()),
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                        ),
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () async {
-                          await Modular.to.pushNamed(
-                            '/profile/feed/?upload-document-id='+userUploads.elementAt(index)['id'],
-                            arguments:
-                              widget.firebase,
-                          ).then((value) {
-                            _refresh();
-                          });
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () async {
+                                String uploadId =
+                                    userUploads.elementAt(index)['id'];
+                                await Modular.to
+                                    .pushNamed(
+                                  '/profile/feed/?upload-document-id=' +
+                                      uploadId,
+                                  arguments: widget.firebase,
+                                )
+                                    .then((value) {
+                                  _refresh();
+                                });
+                              },
+                            );
+                          }
+                          return progressIndicator();
                         },
                       );
                     }
-                    return progressIndicator();
-                  },
-                );
-              }
-            }
-            return progressIndicator();
+                  }
+                  return progressIndicator();
+                },
+              );
+            }),
+        FutureBuilder(
+          future: widget.firebase
+              .getUploadsFromUserByListOfUploadIds(user['saves']),
+          builder: (context, snapshot) {
+            List<Map<String, dynamic>>? userSaveds =
+                snapshot.data as List<Map<String, dynamic>>?;
+            return GridView.builder(
+              padding: EdgeInsets.zero,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 2.0,
+                  mainAxisSpacing: 2.0),
+              itemCount: _savedNumber,
+              itemBuilder: (context, index) {
+                if (userSaveds != null) {
+                  userSaveds.sort((m1, m2) =>
+                      m2["upload-date-time"].compareTo(m1["upload-date-time"]));
+                  _savedNumber = userSaveds.length;
+                  if (index < userSaveds.length) {
+                    Future<String> futuro = widget.firebase
+                        .getUrlFromUploadedImage(userSaveds
+                            .elementAt(index)['upload-storage-reference']);
+                    return FutureBuilder(
+                      future: futuro,
+                      builder: (context, snapshot) {
+                        if (snapshot.data != null) {
+                          return GestureDetector(
+                            child: SizedBox(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                    fit: BoxFit.fitWidth,
+                                    alignment: FractionalOffset.center,
+                                    image:
+                                        NetworkImage(snapshot.data.toString()),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () async {
+                              //print('/profile/feed/?uploadDocumentId='+userUploads.elementAt(index)['id']);
+                              await Modular.to
+                                  .pushNamed(
+                                '/profile/feed/?upload-document-id=' +
+                                    userSaveds.elementAt(index)['id'],
+                                arguments: widget.firebase,
+                              )
+                                  .then((value) {
+                                print('vortei');
+                                setState(() {
+                                  _savedNumber = widget.firebase
+                                      .getSavedsFromUser()!
+                                      .length;
+                                });
+                              });
+                            },
+                          );
+                        }
+                        return progressIndicator();
+                      },
+                    );
+                  }
+                }
+                return progressIndicator();
+              },
+            );
           },
         ),
-        GridView.builder(
-          padding: EdgeInsets.zero,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3, crossAxisSpacing: 2.0, mainAxisSpacing: 2.0),
-          itemCount: _savedNumber,
-          itemBuilder: (context, index) {
-            List<Map>? userSaveds = widget.firebase.getSavedsFromUser();
-            if (userSaveds != null) {
-              userSaveds.sort((m1, m2) =>
-                  m2["upload-date-time"].compareTo(m1["upload-date-time"]));
-              _savedNumber = userSaveds.length;
-              if (index < userSaveds.length) {
-                Future<String> futuro = widget.firebase.getUrlFromUploadedImage(
-                    userSaveds.elementAt(index)['upload-storage-reference']);
-                return FutureBuilder(
-                  future: futuro,
-                  builder: (context, snapshot) {
-                    if (snapshot.data != null) {
-                      return GestureDetector(
-                        child: SizedBox(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                fit: BoxFit.fitWidth,
-                                alignment: FractionalOffset.center,
-                                image: NetworkImage(snapshot.data.toString()),
-                              ),
-                            ),
-                          ),
-                        ),
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () async {
-                          //print('/profile/feed/?uploadDocumentId='+userUploads.elementAt(index)['id']);
-                          await Modular.to.pushNamed(
-                            '/profile/feed/?upload-document-id='+userSaveds.elementAt(index)['id'],
-                            arguments:
-                            widget.firebase,
-                          ).then((value){
-                            print('vortei');
-                            setState(() {
-                              _savedNumber = widget.firebase.getSavedsFromUser()!.length;
-                            });
-                          });
-                        },
-                      );
-                    }
-                    return progressIndicator();
-                  },
-                );
-              }
-            }
-            return progressIndicator();
-          },
-        )
       ],
     );
   }
@@ -418,9 +473,7 @@ class ProfilePageState extends State<ProfilePage> {
 
   void setUsername(String? name) {
     if (name != null) {
-      setState(() {
         usernameText = name;
-      });
     }
   }
 

@@ -22,7 +22,6 @@ class HomePage extends StatefulWidget {
 class HomePageState extends State<HomePage> {
   int _currentIndex = 0;
   final HomeStore store = Modular.get();
-  final List<String> pages = <String>['/home/', '/profile/'];
 
   @override
   void initState() {
@@ -185,6 +184,8 @@ class HomePageState extends State<HomePage> {
   }
 
   void screenChange() {
+    String? profilePage = widget.firebase.getAuthUser()?.uid.toString();
+    List<String> pages = <String>['/home/', '/profile/?profileUserId='+profilePage!];
     Modular.to
         .navigate(pages[_currentIndex],arguments: widget.firebase); //passar codigo da bottomNavigation
   }

@@ -44,6 +44,12 @@ class FirebaseController {
     return _savedsFromUser;
   }
 
+  Future<Map<String, dynamic>> getCollectionOfUserById(String userId) async {
+    return await _firestore.collection('users').doc(userId).get().then((value) {
+      return value.data()!;
+    });
+  }
+
   Future<void> getCollectionOfLoggedUser() async {
     await _firestore
         .collection('users')
@@ -189,6 +195,24 @@ class FirebaseController {
     });
   }
 
+  Future<List<Map<String, dynamic>>> getUploadsFromUserByListOfUploadIds(
+      List uploads) async {
+
+    List<Map<String, dynamic>>? listUpload = [];
+    return await _firestore.collection('uploads').get().then((value) {
+      for (String id in uploads) {
+        for (final upload in value.docs) {
+          if (id == upload.id) {
+            Map<String, dynamic> i = upload.data();
+            i.addAll({'id': upload.id.toString()});
+            listUpload.add(i);
+          }
+        }
+      }
+      return listUpload;
+    });
+  }
+
   Future<void> getSavedsFromLoggedUser() async {
     savedsId = _userCollection['saves'];
     List<Map>? listSaved = [];
@@ -318,27 +342,33 @@ class FirebaseController {
   }
 
   Future<void> followUserById(String? userId, String? followedId) async {
-    await _firestore.collection('users').doc(userId)
-        .update({'followeds': FieldValue.arrayUnion([followedId])});
+    await _firestore.collection('users').doc(userId).update({
+      'followeds': FieldValue.arrayUnion([followedId])
+    });
 
-    await _firestore.collection('users').doc(followedId)
-        .update({'followers': FieldValue.arrayUnion([userId])});
+    await _firestore.collection('users').doc(followedId).update({
+      'followers': FieldValue.arrayUnion([userId])
+    });
   }
 
   Future<void> removeFollowedById(String? userId, String? followedId) async {
-    await _firestore.collection('users').doc(userId)
-        .update({'followeds': FieldValue.arrayRemove([followedId])});
+    await _firestore.collection('users').doc(userId).update({
+      'followeds': FieldValue.arrayRemove([followedId])
+    });
 
-    await _firestore.collection('users').doc(followedId)
-        .update({'followers': FieldValue.arrayRemove([userId])});
+    await _firestore.collection('users').doc(followedId).update({
+      'followers': FieldValue.arrayRemove([userId])
+    });
   }
 
   Future<void> removeFollowerById(String? userId, String? followerId) async {
-    await _firestore.collection('users').doc(userId)
-        .update({'followers': FieldValue.arrayRemove([followerId])});
+    await _firestore.collection('users').doc(userId).update({
+      'followers': FieldValue.arrayRemove([followerId])
+    });
 
-    await _firestore.collection('users').doc(followerId)
-        .update({'followeds': FieldValue.arrayRemove([userId])});
+    await _firestore.collection('users').doc(followerId).update({
+      'followeds': FieldValue.arrayRemove([userId])
+    });
   }
 
   Future<List> getListOfFollowedIdsByUserId(String? userId) async {

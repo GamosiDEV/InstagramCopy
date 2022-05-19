@@ -144,78 +144,84 @@ class FollowPageState extends State<FollowPage> {
                         physics: AlwaysScrollableScrollPhysics(),
                         itemCount: _followerNumbers,
                         itemBuilder: (context, index) {
-                          return Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Container(
-                              child: Row(
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: ClipOval(
-                                      child: SizedBox.fromSize(
-                                        size: Size.fromRadius(32),
-                                        child: getCurrentProfileImage(
-                                            listOfFollowers
-                                                .elementAt(index)['url']),
+                          return GestureDetector(
+                            onTap: (){
+                              print('enviar para tela de perfil');
+                              goToProfileSelected(listOfFollowers.elementAt(index));
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Container(
+                                child: Row(
+                                  children: [
+                                    Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: ClipOval(
+                                        child: SizedBox.fromSize(
+                                          size: Size.fromRadius(32),
+                                          child: getCurrentProfileImage(
+                                              listOfFollowers
+                                                  .elementAt(index)['url']),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  Padding(
-                                    //Alinhar texto a esquerda
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          listOfFollowers
-                                              .elementAt(index)['username'],
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
+                                    Padding(
+                                      //Alinhar texto a esquerda
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            listOfFollowers
+                                                .elementAt(index)['username'],
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          // apos o nome de usuario colocar um ponto e um botão para seguir
+                                          Text(listOfFollowers
+                                              .elementAt(index)['fullname']),
+                                        ],
+                                      ),
+                                    ),
+                                    Spacer(),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: ElevatedButton(
+                                        onPressed: () => showDialog<String>(
+                                          context: context,
+                                          builder: (BuildContext context) =>
+                                              AlertDialog(
+                                            title:
+                                                const Text('Remover seguidor?'),
+                                            content: const Text(
+                                                'O seguidor não sera informado da remoção, deseja proseguir?'),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                                child: const Text('Cancelar'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  removeFollower(index);
+                                                  Navigator.of(context).pop();
+                                                },
+                                                child: const Text(
+                                                  'Remover',
+                                                  style: TextStyle(
+                                                    color: Colors.redAccent,
+                                                  ),
+                                                ),
+                                              )
+                                            ],
                                           ),
                                         ),
-                                        // apos o nome de usuario colocar um ponto e um botão para seguir
-                                        Text(listOfFollowers
-                                            .elementAt(index)['fullname']),
-                                      ],
-                                    ),
-                                  ),
-                                  Spacer(),
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: ElevatedButton(
-                                      onPressed: () => showDialog<String>(
-                                        context: context,
-                                        builder: (BuildContext context) =>
-                                            AlertDialog(
-                                          title:
-                                              const Text('Remover seguidor?'),
-                                          content: const Text(
-                                              'O seguidor não sera informado da remoção, deseja proseguir?'),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: const Text('Cancelar'),
-                                            ),
-                                            TextButton(
-                                              onPressed: () {
-                                                removeFollower(index);
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: const Text(
-                                                'Remover',
-                                                style: TextStyle(
-                                                  color: Colors.redAccent,
-                                                ),
-                                              ),
-                                            )
-                                          ],
-                                        ),
+                                        child: Text('Remover'),
                                       ),
-                                      child: Text('Remover'),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           );
@@ -261,81 +267,86 @@ class FollowPageState extends State<FollowPage> {
                         physics: AlwaysScrollableScrollPhysics(),
                         itemCount: _followedNumbers,
                         itemBuilder: (context, index) {
-                          return Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Container(
-                              child: Row(
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: ClipOval(
-                                      child: SizedBox.fromSize(
-                                        size: Size.fromRadius(32),
-                                        child: getCurrentProfileImage(
-                                            listOfFolloweds
-                                                .elementAt(index)['url']),
+                          return GestureDetector(
+                            onTap: (){
+                              print('enviar para tela de perfil');
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Container(
+                                child: Row(
+                                  children: [
+                                    Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: ClipOval(
+                                        child: SizedBox.fromSize(
+                                          size: Size.fromRadius(32),
+                                          child: getCurrentProfileImage(
+                                              listOfFolloweds
+                                                  .elementAt(index)['url']),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  Padding(
-                                    //Alinhar texto a esquerda
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          listOfFolloweds
-                                              .elementAt(index)['username'],
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        // apos o nome de usuario colocar um ponto e um botão para seguir
-                                        Text(listOfFolloweds
-                                            .elementAt(index)['fullname']),
-                                      ],
-                                    ),
-                                  ),
-                                  Spacer(),
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                          showDialog<String>(
-                                            context: context,
-                                            builder: (BuildContext context) =>
-                                                AlertDialog(
-                                              title: const Text(
-                                                  'Parar de seguir?'),
-                                              content: const Text(
-                                                  'Se mudar de ideia devera pedir para seguir novamente, deseja confirmar?'),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                  child: const Text('Cancelar'),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () {
-                                                    followUser(index);
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                  child: const Text(
-                                                    'Deixar de seguir',
-                                                    style: TextStyle(
-                                                      color: Colors.redAccent,
-                                                    ),
-                                                  ),
-                                                )
-                                              ],
+                                    Padding(
+                                      //Alinhar texto a esquerda
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            listOfFolloweds
+                                                .elementAt(index)['username'],
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
                                             ),
-                                          );
-
-                                      },
-                                      child: Text('Seguindo'),
+                                          ),
+                                          // apos o nome de usuario colocar um ponto e um botão para seguir
+                                          Text(listOfFolloweds
+                                              .elementAt(index)['fullname']),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    Spacer(),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                            showDialog<String>(
+                                              context: context,
+                                              builder: (BuildContext context) =>
+                                                  AlertDialog(
+                                                title: const Text(
+                                                    'Parar de seguir?'),
+                                                content: const Text(
+                                                    'Se mudar de ideia devera pedir para seguir novamente, deseja confirmar?'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context).pop();
+                                                    },
+                                                    child: const Text('Cancelar'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      followUser(index);
+                                                      Navigator.of(context).pop();
+                                                    },
+                                                    child: const Text(
+                                                      'Deixar de seguir',
+                                                      style: TextStyle(
+                                                        color: Colors.redAccent,
+                                                      ),
+                                                    ),
+                                                  )
+                                                ],
+                                              ),
+                                            );
+
+                                        },
+                                        child: Text('Seguindo'),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           );
@@ -351,6 +362,10 @@ class FollowPageState extends State<FollowPage> {
         )
       ],
     );
+  }
+
+  void goToProfileSelected(Map user){
+    Modular.to.pushNamed('/profile/?profileUserId='+user['id'],arguments: widget.firebase);
   }
 
   void removeFollower(int index) {
