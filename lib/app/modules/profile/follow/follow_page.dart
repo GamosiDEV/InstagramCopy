@@ -30,6 +30,8 @@ class FollowPageState extends State<FollowPage> {
   int totalFollowers = 0;
   int totalFolloweds = 0;
 
+  List<Map> listOfFollowers = [];
+
   late Future<List<Map>> dataOfFollowers;
   late Future<List<Map>> dataOfFolloweds;
 
@@ -51,18 +53,17 @@ class FollowPageState extends State<FollowPage> {
   }
 
   void reloadFollowers(String query) {
-    dataOfFollowers = widget.firebase.getSearchedFollowersFromUserById(
-        widget.userId, query);
+    dataOfFollowers =
+        widget.firebase.getSearchedFollowersFromUserById(widget.userId, query);
   }
 
   void reloadFolloweds(String query) {
-    dataOfFolloweds = widget.firebase.getSearchedFollowedsFromUserById(
-        widget.userId, query);
+    dataOfFolloweds =
+        widget.firebase.getSearchedFollowedsFromUserById(widget.userId, query);
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -114,8 +115,8 @@ class FollowPageState extends State<FollowPage> {
           future: dataOfFollowers,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              List<Map> list = snapshot.data as List<Map>;
-              _followerNumbers = list.length;
+              listOfFollowers = snapshot.data as List<Map>;
+              _followerNumbers = listOfFollowers.length;
               return Container(
                 child: Column(
                   children: [
@@ -153,7 +154,8 @@ class FollowPageState extends State<FollowPage> {
                                       child: SizedBox.fromSize(
                                         size: Size.fromRadius(32),
                                         child: getCurrentProfileImage(
-                                            list.elementAt(index)['url']),
+                                            listOfFollowers
+                                                .elementAt(index)['url']),
                                       ),
                                     ),
                                   ),
@@ -163,13 +165,15 @@ class FollowPageState extends State<FollowPage> {
                                     child: Column(
                                       children: [
                                         Text(
-                                          list.elementAt(index)['username'],
+                                          listOfFollowers
+                                              .elementAt(index)['username'],
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                         // apos o nome de usuario colocar um ponto e um botão para seguir
-                                        Text(list.elementAt(index)['fullname']),
+                                        Text(listOfFollowers
+                                            .elementAt(index)['fullname']),
                                       ],
                                     ),
                                   ),
@@ -177,7 +181,36 @@ class FollowPageState extends State<FollowPage> {
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: ElevatedButton(
-                                      onPressed: () {},
+                                      onPressed: () => showDialog<String>(
+                                        context: context,
+                                        builder: (BuildContext context) =>
+                                            AlertDialog(
+                                          title:
+                                              const Text('Remover seguidor?'),
+                                          content: const Text(
+                                              'O seguidor não sera informado da remoção, deseja proseguir?'),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: const Text('Cancelar'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () {
+                                                removeFollower(index);
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: const Text(
+                                                'Remover',
+                                                style: TextStyle(
+                                                  color: Colors.redAccent,
+                                                ),
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      ),
                                       child: Text('Remover'),
                                     ),
                                   ),
@@ -283,6 +316,17 @@ class FollowPageState extends State<FollowPage> {
         )
       ],
     );
+  }
+
+  void removeFollower(int index) {
+    widget.firebase
+        .removeFollowerById(
+            widget.userId, listOfFollowers.elementAt(index)['id'])
+        .whenComplete(() {
+      setState(() {
+        reloadFollowers('');
+      });
+    });
   }
 
   Widget getCurrentProfileImage(String url) {

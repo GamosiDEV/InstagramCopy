@@ -192,7 +192,7 @@ class ProfilePageState extends State<ProfilePage> {
               ),
               Spacer(),
               GestureDetector(
-                onTap: (){//enviar um sinalizador para abrir diretamente na aba de seguidores
+                onTap: (){
                   Modular.to
                       .pushNamed('/profile/follow/?userId='+widget.firebase.getAuthUser()!.uid,arguments: widget.firebase,)
                       .whenComplete(() {

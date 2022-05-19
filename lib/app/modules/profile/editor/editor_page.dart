@@ -217,20 +217,8 @@ class EditorPageState extends State<EditorPage> {
   }
 
   void getLoggedUser() {
-    //update logged user info
     userData = widget.firebase.getLoggedUserCollection()?.cast<String, dynamic>() ;
     setFieldsWithLoggedUser();
-    // _auth.authStateChanges().listen((user) async {
-    //   if (user != null) {
-    //     await FirebaseFirestore.instance
-    //         .collection('users')
-    //         .doc(user.uid)
-    //         .get()
-    //         .then((value) {
-    //       setFieldsWithLoggedUser(value.data());
-    //     });
-    //   }
-    // });
   }
 
   void setFieldsWithLoggedUser() {

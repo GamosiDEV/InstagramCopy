@@ -298,6 +298,7 @@ class FirebaseController {
                     .then((value) {
                   map.addAll({'url': value});
                 });
+                map.addAll({'id': document.id});
                 dataOfFollowers.add(map);
               }
             } else {
@@ -305,6 +306,7 @@ class FirebaseController {
                       document.data()['profile-image-reference'])
                   .then((value) {
                 map.addAll({'url': value});
+                map.addAll({'id': document.id});
               });
               dataOfFollowers.add(map);
             }
@@ -313,6 +315,14 @@ class FirebaseController {
       }
     });
     return dataOfFollowers;
+  }
+  Future<void> removeFollowerById(String? userId, String? followerId) async {
+    print(userId!+' - '+followerId!);
+    await _firestore.collection('users').doc(userId)
+        .update({'followers': FieldValue.arrayRemove([followerId])});
+
+    await _firestore.collection('users').doc(followerId)
+        .update({'followeds': FieldValue.arrayRemove([userId])});
   }
 
   Future<List> getListOfFollowedIdsByUserId(String? userId) async {
