@@ -31,6 +31,7 @@ class FollowPageState extends State<FollowPage> {
   int totalFolloweds = 0;
 
   List<Map> listOfFollowers = [];
+  List<Map> listOfFolloweds = [];
 
   late Future<List<Map>> dataOfFollowers;
   late Future<List<Map>> dataOfFolloweds;
@@ -232,8 +233,8 @@ class FollowPageState extends State<FollowPage> {
           future: dataOfFolloweds,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              List<Map> list = snapshot.data as List<Map>;
-              _followedNumbers = list.length;
+              listOfFolloweds = snapshot.data as List<Map>;
+              _followedNumbers = listOfFolloweds.length;
               return Container(
                 child: Column(
                   children: [
@@ -260,7 +261,6 @@ class FollowPageState extends State<FollowPage> {
                         physics: AlwaysScrollableScrollPhysics(),
                         itemCount: _followedNumbers,
                         itemBuilder: (context, index) {
-                          //aqui
                           return Padding(
                             padding: EdgeInsets.all(8.0),
                             child: Container(
@@ -272,7 +272,8 @@ class FollowPageState extends State<FollowPage> {
                                       child: SizedBox.fromSize(
                                         size: Size.fromRadius(32),
                                         child: getCurrentProfileImage(
-                                            list.elementAt(index)['url']),
+                                            listOfFolloweds
+                                                .elementAt(index)['url']),
                                       ),
                                     ),
                                   ),
@@ -282,13 +283,15 @@ class FollowPageState extends State<FollowPage> {
                                     child: Column(
                                       children: [
                                         Text(
-                                          list.elementAt(index)['username'],
+                                          listOfFolloweds
+                                              .elementAt(index)['username'],
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                         // apos o nome de usuario colocar um ponto e um botão para seguir
-                                        Text(list.elementAt(index)['fullname']),
+                                        Text(listOfFolloweds
+                                            .elementAt(index)['fullname']),
                                       ],
                                     ),
                                   ),
@@ -296,7 +299,39 @@ class FollowPageState extends State<FollowPage> {
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: ElevatedButton(
-                                      onPressed: () {},
+                                      onPressed: () {
+                                          showDialog<String>(
+                                            context: context,
+                                            builder: (BuildContext context) =>
+                                                AlertDialog(
+                                              title: const Text(
+                                                  'Parar de seguir?'),
+                                              content: const Text(
+                                                  'Se mudar de ideia devera pedir para seguir novamente, deseja confirmar?'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: const Text('Cancelar'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {
+                                                    followUser(index);
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: const Text(
+                                                    'Deixar de seguir',
+                                                    style: TextStyle(
+                                                      color: Colors.redAccent,
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          );
+
+                                      },
                                       child: Text('Seguindo'),
                                     ),
                                   ),
@@ -345,5 +380,11 @@ class FollowPageState extends State<FollowPage> {
       'https://previews.123rf.com/images/happyvector071/happyvector0711904/happyvector071190414608/120957993-creative-illustration-of-default-avatar-profile-placeholder-isolated-on-background-art-design-grey-p.jpg',
       fit: BoxFit.cover,
     );
+  }
+
+  void followUser(int index) {
+      widget.firebase.removeFollowedById(
+          widget.userId, listOfFolloweds.elementAt(index)['id']);
+      reloadFolloweds('');
   }
 }
