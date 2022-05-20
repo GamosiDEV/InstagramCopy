@@ -146,7 +146,6 @@ class FollowPageState extends State<FollowPage> {
                         itemBuilder: (context, index) {
                           return GestureDetector(
                             onTap: (){
-                              print('enviar para tela de perfil');
                               goToProfileSelected(listOfFollowers.elementAt(index));
                             },
                             child: Padding(
@@ -269,7 +268,7 @@ class FollowPageState extends State<FollowPage> {
                         itemBuilder: (context, index) {
                           return GestureDetector(
                             onTap: (){
-                              print('enviar para tela de perfil');
+                              goToProfileSelected(listOfFolloweds.elementAt(index));
                             },
                             child: Padding(
                               padding: EdgeInsets.all(8.0),

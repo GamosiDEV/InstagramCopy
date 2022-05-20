@@ -13,6 +13,7 @@ class FeedModule extends Module {
     ChildRoute(Modular.initialRoute,
         child: (_, args) => FeedPage(
             firebase: args.data,
-            uploadDocumentId: args.queryParams['upload-document-id'])),
+            uploadDocumentId: args.queryParams['upload-document-id'],
+            userId: args.queryParams['user-id'])),
   ];
 }

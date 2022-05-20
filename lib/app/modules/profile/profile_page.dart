@@ -412,8 +412,8 @@ class ProfilePageState extends State<ProfilePage> {
                                     userUploads.elementAt(index)['id'];
                                 await Modular.to
                                     .pushNamed(
-                                  '/profile/feed/?upload-document-id=' +
-                                      uploadId,
+                                  '/profile/feed/?user-id='+ widget.profileUserId!+
+                                      '&upload-document-id=' + uploadId,
                                   arguments: widget.firebase,
                                 )
                                     .then((value) {
@@ -472,14 +472,14 @@ class ProfilePageState extends State<ProfilePage> {
                             ),
                             behavior: HitTestBehavior.opaque,
                             onTap: () async {
-                              //print('/profile/feed/?uploadDocumentId='+userUploads.elementAt(index)['id']);
                               await Modular.to
-                                  .pushNamed(
-                                '/profile/feed/?upload-document-id=' +
-                                    userSaveds.elementAt(index)['id'],
+                                  .pushNamed('/profile/feed/?user-id='+ widget.profileUserId!+
+                                  '&upload-document-id=' +
+                                  userSaveds.elementAt(index)['id'],
                                 arguments: widget.firebase,
                               )
                                   .then((value) {
+
                                 print('vortei');
                                 setState(() {
                                   _savedNumber = widget.firebase

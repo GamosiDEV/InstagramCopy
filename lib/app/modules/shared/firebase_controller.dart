@@ -45,12 +45,19 @@ class FirebaseController {
   }
 
   Future<Map<String, dynamic>> getCollectionOfUserById(String userId) async {
+    print(userId);
     return await _firestore.collection('users').doc(userId).get().then((value) async {
       Map<String, dynamic> user = value.data()!;
-      await _storage.ref(value.data()?['profile-image-reference'] + 'profile')
-          .getDownloadURL().then((value) {
-        user.addAll({'url': value});
-      });
+      print(user);
+      if(value.data()?['profile-image-reference'] != null
+          && value.data()?['profile-image-reference'] != ''){
+        await _storage
+            .ref(value.data()?['profile-image-reference'] + 'profile')
+            .getDownloadURL()
+            .then((value) {
+          user.addAll({'url': value});
+        });
+      }
       return user;
     });
   }

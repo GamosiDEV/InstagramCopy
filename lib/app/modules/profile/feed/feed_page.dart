@@ -8,11 +8,13 @@ class FeedPage extends StatefulWidget {
   final String title;
   final FirebaseController firebase;
   final String? uploadDocumentId;
+  final String? userId;
 
   const FeedPage(
       {Key? key,
       this.title = 'FeedPage',
       required this.uploadDocumentId,
+      required this.userId, //remover isto
       required this.firebase})
       : super(key: key);
 
@@ -24,14 +26,13 @@ class FeedPageState extends State<FeedPage> {
   final FeedStore store = Modular.get();
   bool asSaved = false;
   bool asLiked = false;
+  Map<String, dynamic> uploadUser = {};
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
-      print(widget
-          .uploadDocumentId); //pegar esse id, buscar o upload na base de dados e exibilo na tela com todas as suas informações
       asSaved = widget.firebase.asSaved(widget.uploadDocumentId.toString());
       widget.firebase
           .asLiked(widget.uploadDocumentId.toString())
@@ -45,152 +46,176 @@ class FeedPageState extends State<FeedPage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: SingleChildScrollView(
-        child: GestureDetector(
-          child: FutureBuilder(
-            future: widget.firebase
-                .getDocumentOfUploadedImage(widget.uploadDocumentId),
-            builder: (context, snapshot) {
-              if (snapshot != null && snapshot.data != null) {
-                Map<String, dynamic> upload =
-                    snapshot.data as Map<String, dynamic>;
-                return Card(
-                  elevation: 0,
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(5.0),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding:
-                                  const EdgeInsets.fromLTRB(5.0, 0, 10.0, 0),
-                              child: ClipOval(
-                                child: SizedBox.fromSize(
-                                  size: Size.fromRadius(16),
-                                  child: getCurrentProfileImage(),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  print("Send to Profile page of the uploader");
-                                },
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        child: SingleChildScrollView(
+          child: GestureDetector(
+            child: FutureBuilder(
+              future: widget.firebase
+                  .getDocumentOfUploadedImage(widget.uploadDocumentId),
+              builder: (context, snapshot) {
+                if (snapshot != null && snapshot.data != null) {
+                  Map<String, dynamic> upload =
+                      snapshot.data as Map<String, dynamic>;
+                  return Card(
+                    elevation: 0,
+                    child: FutureBuilder(
+                      future: widget.firebase
+                          .getCollectionOfUserById(upload['uploader-id']),
+                      builder: (context, snapshotFromUser) {
+                        if (snapshotFromUser.hasData) {
+                          uploadUser = snapshotFromUser.data as Map<String,dynamic>;
+                          return Column(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(5.0),
+                                child: Row(
                                   children: [
-                                    Text(
-                                      widget.firebase
-                                              .getLoggedUserCollection()?[
-                                          'username'],
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16),
-                                    )
+                                    Container(
+                                      padding: const EdgeInsets.fromLTRB(
+                                          5.0, 0, 10.0, 0),
+                                      child: ClipOval(
+                                        child: SizedBox.fromSize(
+                                          size: Size.fromRadius(16),
+                                          child: getCurrentProfileImage(),
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          print(
+                                              "Send to Profile page of the uploader");
+                                        },
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.stretch,
+                                          children: [
+                                            Text(
+                                              uploadUser['username'].toString(),
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16),
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      onPressed: () {
+                                        print("compartilhar imagem");
+                                      },
+                                      icon: const Icon(Icons.share),
+                                    ),
                                   ],
                                 ),
                               ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                print("compartilhar imagem");
-                              },
-                              icon: const Icon(Icons.share),
-                            ),
-                          ],
-                        ),
-                      ),
-                      setImage(upload['upload-storage-reference']),
-                      Row(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          IconButton(
-                            onPressed: () async {
-                              await widget.firebase
-                                  .setLikeDatabase(
-                                      widget.uploadDocumentId.toString())
-                                  .then((value) {
-                                setState(() {
-                                  asLiked = value;
-                                });
-                              });
-                            },
-                            icon: asLiked
-                                ? Icon(Icons.star)
-                                : Icon(Icons.star_border),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              print('Comments');
-                            },
-                            icon: const Icon(Icons.comment),
-                          ),
-                          //icone para multiplas fotos fica por aqui
-                          Spacer(),
-                          IconButton(
-                            onPressed: () async {
-                              await widget.firebase.setSaveToUser(
-                                  widget.uploadDocumentId.toString());
-                              setState(() {
-                                asSaved = widget.firebase.asSaved(
-                                    widget.uploadDocumentId.toString());
-                              });
-                            },
-                            icon: asSaved
-                                ? Icon(Icons.save)
-                                : Icon(Icons.save_outlined),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: EdgeInsets.all(10.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(upload['liked-by'].length.toString() +
-                                ' curtidas'),
-                            Text(widget.firebase
-                                    .getLoggedUserCollection()?['username'] +
-                                ' ' +
-                                upload['description']),
-                            Text('Ver Comentarios'),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(5.0),
-                                  child: ClipOval(
-                                    child: SizedBox.fromSize(
-                                      size: Size.fromRadius(16),
-                                      child: Image.asset(
-                                        'assets/images/face.jpg',
-                                      ),
-                                    ),
+                              setImage(upload['upload-storage-reference']),
+                              Row(
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  IconButton(
+                                    onPressed: () async {
+                                      await widget.firebase
+                                          .setLikeDatabase(
+                                              widget.uploadDocumentId.toString())
+                                          .then((value) {
+                                        setState(() {
+                                          asLiked = value;
+                                        });
+                                      });
+                                    },
+                                    icon: asLiked
+                                        ? Icon(Icons.star)
+                                        : Icon(Icons.star_border),
                                   ),
+                                  IconButton(
+                                    onPressed: () {
+                                      print('Comments');
+                                    },
+                                    icon: const Icon(Icons.comment),
+                                  ),
+                                  //icone para multiplas fotos fica por aqui
+                                  Spacer(),
+                                  IconButton(
+                                    onPressed: () async {
+                                      await widget.firebase.setSaveToUser(
+                                          widget.uploadDocumentId.toString());
+                                      setState(() {
+                                        asSaved = widget.firebase.asSaved(
+                                            widget.uploadDocumentId.toString());
+                                      });
+                                    },
+                                    icon: asSaved
+                                        ? Icon(Icons.save)
+                                        : Icon(Icons.save_outlined),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: EdgeInsets.all(10.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(upload['liked-by'].length.toString() +
+                                        ' curtidas'),
+                                    Text(uploadUser['username'].toString() +
+                                        ' ' +
+                                        upload['description'].toString()),
+                                    Text('Ver Comentarios'),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(5.0),
+                                          child: ClipOval(
+                                            child: SizedBox.fromSize(
+                                              size: Size.fromRadius(16),
+                                              child: Image.asset(
+                                                'assets/images/face.jpg',
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Text('Digite seu comentario'),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                                Text('Digite seu comentario'),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      Row(),
-                    ],
-                  ),
-                );
-              }
-              return Container();
-            },
+                              ),
+                              Row(),
+                            ],
+                          );
+                        }
+                        return progressIndicator();
+                      },
+                    ),
+                  );
+                }
+                return progressIndicator();
+              },
+            ),
           ),
         ),
       ),
     );
   }
 
+  Widget progressIndicator() {
+    return Container(
+      width: 200.0,
+      height: 200.0,
+      alignment: Alignment.center,
+      child: const CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+        strokeWidth: 5.0,
+      ),
+    );
+  }
+
   Widget getCurrentProfileImage() {
-    String? url = widget.firebase.getProfileImageUrl();
+    String? url = uploadUser['url'];
     if (url != null && url != '') {
       return Image.network(
         url,
