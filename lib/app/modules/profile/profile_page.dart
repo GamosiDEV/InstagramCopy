@@ -51,10 +51,11 @@ class ProfilePageState extends State<ProfilePage> {
     // TODO: implement initState
     super.initState();
     widget.firebase
-        .getCollectionOfUserById(widget.profileUserId.toString()).then((value){
-          setState(() {
-            usernameText = value['username'];
-          });
+        .getCollectionOfUserById(widget.profileUserId.toString())
+        .then((value) {
+      setState(() {
+        usernameText = value['username'];
+      });
     });
 
     WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {});
@@ -63,7 +64,6 @@ class ProfilePageState extends State<ProfilePage> {
   void _refresh() {
     _postNumber = user['uploads'].length;
     _savedNumber = user['saves'].length;
-
   }
 
   @override
@@ -73,7 +73,7 @@ class ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(
         title: Text(usernameText),
         actions: [
-          IconButton(
+          widget.profileUserId == widget.firebase.getAuthUser()?.uid ?IconButton(
             icon: Icon(Icons.add_box_rounded),
             onPressed: () async {
               await Modular.to
@@ -84,7 +84,7 @@ class ProfilePageState extends State<ProfilePage> {
                 });
               });
             }, //adicionar foto
-          ),
+          ) : Container(),
           IconButton(
             icon: Icon(Icons.menu),
             onPressed: null, //config
@@ -100,7 +100,6 @@ class ProfilePageState extends State<ProfilePage> {
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               user = snapshot.data as Map<String, dynamic>;
-
               print(usernameText);
               _refresh();
               return DefaultTabController(
@@ -288,37 +287,84 @@ class ProfilePageState extends State<ProfilePage> {
               ],
             ),
           ),
-          widget.profileUserId == widget.firebase.getAuthUser()?.uid ? Container(
-            padding: EdgeInsets.all(8.0),
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () async {
-                await Modular.to
-                    .pushNamed('/profile/editor/', arguments: widget.firebase)
-                    .then((value) {
-                  _refresh();
-                });
-              },
-              child: Text(
-                'Editar perfil',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ) : Container(
-            //botão para seguir vai aqui=====================================================================================
-          ),
+          widget.profileUserId == widget.firebase.getAuthUser()?.uid
+              ? Container(
+                  padding: EdgeInsets.all(8.0),
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      await Modular.to
+                          .pushNamed('/profile/editor/',
+                              arguments: widget.firebase)
+                          .then((value) {
+                        _refresh();
+                      });
+                    },
+                    child: Text(
+                      'Editar perfil',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                )
+              : asFollowedUser()
+                  ? Container(
+                      padding: EdgeInsets.all(8.0),
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          widget.firebase
+                              .removeFollowedById(
+                                  widget.firebase.getAuthUser()?.uid,
+                                  widget.profileUserId)
+                              .whenComplete(() {
+                            print(user['followers']);
+                            setState(() {
+                              user['followers'].remove(widget.firebase.getAuthUser()?.uid);
+                            });
+                            print(user['followers']);
+                            print('Deixou de Seguir');
+                          });
+                        },
+                        child: Text(
+                          'Deixar de Seguir',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      padding: EdgeInsets.all(8.0),
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          widget.firebase
+                              .followUserById(
+                                  widget.firebase.getAuthUser()?.uid,
+                                  widget.profileUserId)
+                              .whenComplete(() {
+                            print(user['followers']);
+                            setState(() {
+                              user['followers']
+                                  .add(widget.firebase.getAuthUser()?.uid);
+                            });
+                            print(user['followers']);
+                            print('Seguindo');
+                          });
+                        },
+                        child: Text(
+                          'Seguir',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
         ],
       ),
     );
   }
 
   Widget generateTabBarView(BuildContext context, AsyncSnapshot snapshot) {
-    // List<Map<String, dynamic>>? userUploads = [];
-    //
-    //     .then((value) {
-    //         userUploads = value;
-    //         print(userUploads);
-    // });
     return TabBarView(
       children: [
         FutureBuilder(
@@ -473,7 +519,7 @@ class ProfilePageState extends State<ProfilePage> {
 
   void setUsername(String? name) {
     if (name != null) {
-        usernameText = name;
+      usernameText = name;
     }
   }
 
@@ -499,7 +545,7 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   Widget getCurrentProfileImage() {
-    String? url = widget.firebase.getProfileImageUrl();
+    String? url = user['url'];
     if (url != null && url != '') {
       return Image.network(
         url,
@@ -515,5 +561,14 @@ class ProfilePageState extends State<ProfilePage> {
       'https://previews.123rf.com/images/happyvector071/happyvector0711904/happyvector071190414608/120957993-creative-illustration-of-default-avatar-profile-placeholder-isolated-on-background-art-design-grey-p.jpg',
       fit: BoxFit.cover,
     );
+  }
+
+  bool asFollowedUser() {
+    for (final value in user['followers']) {
+      if (value == widget.firebase.getAuthUser()?.uid) {
+        return true;
+      }
+    }
+    return false;
   }
 }

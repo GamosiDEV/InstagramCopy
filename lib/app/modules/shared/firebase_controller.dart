@@ -45,8 +45,13 @@ class FirebaseController {
   }
 
   Future<Map<String, dynamic>> getCollectionOfUserById(String userId) async {
-    return await _firestore.collection('users').doc(userId).get().then((value) {
-      return value.data()!;
+    return await _firestore.collection('users').doc(userId).get().then((value) async {
+      Map<String, dynamic> user = value.data()!;
+      await _storage.ref(value.data()?['profile-image-reference'] + 'profile')
+          .getDownloadURL().then((value) {
+        user.addAll({'url': value});
+      });
+      return user;
     });
   }
 
@@ -273,6 +278,8 @@ class FirebaseController {
     });
   }
 
+
+
   User? getLoggedUser() {
     return _auth.currentUser;
   }
@@ -416,4 +423,5 @@ class FirebaseController {
     });
     return dataOfFolloweds;
   }
+
 }
