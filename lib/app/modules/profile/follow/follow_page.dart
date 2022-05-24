@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:instagram_copy/app/modules/profile/follow/follow_store.dart';
@@ -145,8 +143,9 @@ class FollowPageState extends State<FollowPage> {
                         itemCount: _followerNumbers,
                         itemBuilder: (context, index) {
                           return GestureDetector(
-                            onTap: (){
-                              goToProfileSelected(listOfFollowers.elementAt(index));
+                            onTap: () {
+                              goToProfileSelected(
+                                  listOfFollowers.elementAt(index));
                             },
                             child: Padding(
                               padding: EdgeInsets.all(8.0),
@@ -267,8 +266,9 @@ class FollowPageState extends State<FollowPage> {
                         itemCount: _followedNumbers,
                         itemBuilder: (context, index) {
                           return GestureDetector(
-                            onTap: (){
-                              goToProfileSelected(listOfFolloweds.elementAt(index));
+                            onTap: () {
+                              goToProfileSelected(
+                                  listOfFolloweds.elementAt(index));
                             },
                             child: Padding(
                               padding: EdgeInsets.all(8.0),
@@ -309,37 +309,36 @@ class FollowPageState extends State<FollowPage> {
                                       padding: const EdgeInsets.all(8.0),
                                       child: ElevatedButton(
                                         onPressed: () {
-                                            showDialog<String>(
-                                              context: context,
-                                              builder: (BuildContext context) =>
-                                                  AlertDialog(
-                                                title: const Text(
-                                                    'Parar de seguir?'),
-                                                content: const Text(
-                                                    'Se mudar de ideia devera pedir para seguir novamente, deseja confirmar?'),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      Navigator.of(context).pop();
-                                                    },
-                                                    child: const Text('Cancelar'),
-                                                  ),
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      followUser(index);
-                                                      Navigator.of(context).pop();
-                                                    },
-                                                    child: const Text(
-                                                      'Deixar de seguir',
-                                                      style: TextStyle(
-                                                        color: Colors.redAccent,
-                                                      ),
+                                          showDialog<String>(
+                                            context: context,
+                                            builder: (BuildContext context) =>
+                                                AlertDialog(
+                                              title: const Text(
+                                                  'Parar de seguir?'),
+                                              content: const Text(
+                                                  'Se mudar de ideia devera pedir para seguir novamente, deseja confirmar?'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: const Text('Cancelar'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {
+                                                    followUser(index);
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: const Text(
+                                                    'Deixar de seguir',
+                                                    style: TextStyle(
+                                                      color: Colors.redAccent,
                                                     ),
-                                                  )
-                                                ],
-                                              ),
-                                            );
-
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          );
                                         },
                                         child: Text('Seguindo'),
                                       ),
@@ -363,8 +362,9 @@ class FollowPageState extends State<FollowPage> {
     );
   }
 
-  void goToProfileSelected(Map user){
-    Modular.to.pushNamed('/profile/?profileUserId='+user['id'],arguments: widget.firebase);
+  void goToProfileSelected(Map user) {
+    Modular.to.pushNamed('/profile/?profileUserId=' + user['id'],
+        arguments: widget.firebase);
   }
 
   void removeFollower(int index) {
@@ -397,8 +397,8 @@ class FollowPageState extends State<FollowPage> {
   }
 
   void followUser(int index) {
-      widget.firebase.removeFollowedById(
-          widget.userId, listOfFolloweds.elementAt(index)['id']);
-      reloadFolloweds('');
+    widget.firebase.removeFollowedById(
+        widget.userId, listOfFolloweds.elementAt(index)['id']);
+    reloadFolloweds('');
   }
 }

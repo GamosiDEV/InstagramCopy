@@ -65,7 +65,8 @@ class FeedPageState extends State<FeedPage> {
                           .getCollectionOfUserById(upload['uploader-id']),
                       builder: (context, snapshotFromUser) {
                         if (snapshotFromUser.hasData) {
-                          uploadUser = snapshotFromUser.data as Map<String,dynamic>;
+                          uploadUser =
+                              snapshotFromUser.data as Map<String, dynamic>;
                           return Column(
                             children: [
                               Container(
@@ -85,8 +86,10 @@ class FeedPageState extends State<FeedPage> {
                                     Expanded(
                                       child: GestureDetector(
                                         onTap: () {
-                                          print(
-                                              "Send to Profile page of the uploader");
+                                          Modular.to.pushNamed(
+                                              '/profile/?profileUserId=' +
+                                                  upload['uploader-id'],
+                                              arguments: widget.firebase);
                                         },
                                         child: Column(
                                           mainAxisSize: MainAxisSize.min,
@@ -119,8 +122,9 @@ class FeedPageState extends State<FeedPage> {
                                   IconButton(
                                     onPressed: () async {
                                       await widget.firebase
-                                          .setLikeDatabase(
-                                              widget.uploadDocumentId.toString())
+                                          .setLikeDatabase(widget
+                                              .uploadDocumentId
+                                              .toString())
                                           .then((value) {
                                         setState(() {
                                           asLiked = value;

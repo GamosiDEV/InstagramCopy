@@ -73,18 +73,20 @@ class ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(
         title: Text(usernameText),
         actions: [
-          widget.profileUserId == widget.firebase.getAuthUser()?.uid ?IconButton(
-            icon: Icon(Icons.add_box_rounded),
-            onPressed: () async {
-              await Modular.to
-                  .pushNamed('/post/', arguments: widget.firebase)
-                  .then((value) {
-                setState(() {
-                  _refresh();
-                });
-              });
-            }, //adicionar foto
-          ) : Container(),
+          widget.profileUserId == widget.firebase.getAuthUser()?.uid
+              ? IconButton(
+                  icon: Icon(Icons.add_box_rounded),
+                  onPressed: () async {
+                    await Modular.to
+                        .pushNamed('/post/', arguments: widget.firebase)
+                        .then((value) {
+                      setState(() {
+                        _refresh();
+                      });
+                    });
+                  }, //adicionar foto
+                )
+              : Container(),
           IconButton(
             icon: Icon(Icons.menu),
             onPressed: null, //config
@@ -320,7 +322,8 @@ class ProfilePageState extends State<ProfilePage> {
                               .whenComplete(() {
                             print(user['followers']);
                             setState(() {
-                              user['followers'].remove(widget.firebase.getAuthUser()?.uid);
+                              user['followers']
+                                  .remove(widget.firebase.getAuthUser()?.uid);
                             });
                             print(user['followers']);
                             print('Deixou de Seguir');
@@ -412,8 +415,10 @@ class ProfilePageState extends State<ProfilePage> {
                                     userUploads.elementAt(index)['id'];
                                 await Modular.to
                                     .pushNamed(
-                                  '/profile/feed/?user-id='+ widget.profileUserId!+
-                                      '&upload-document-id=' + uploadId,
+                                  '/profile/feed/?user-id=' +
+                                      widget.profileUserId! +
+                                      '&upload-document-id=' +
+                                      uploadId,
                                   arguments: widget.firebase,
                                 )
                                     .then((value) {
@@ -473,13 +478,14 @@ class ProfilePageState extends State<ProfilePage> {
                             behavior: HitTestBehavior.opaque,
                             onTap: () async {
                               await Modular.to
-                                  .pushNamed('/profile/feed/?user-id='+ widget.profileUserId!+
-                                  '&upload-document-id=' +
-                                  userSaveds.elementAt(index)['id'],
+                                  .pushNamed(
+                                '/profile/feed/?user-id=' +
+                                    widget.profileUserId! +
+                                    '&upload-document-id=' +
+                                    userSaveds.elementAt(index)['id'],
                                 arguments: widget.firebase,
                               )
                                   .then((value) {
-
                                 print('vortei');
                                 setState(() {
                                   _savedNumber = widget.firebase
