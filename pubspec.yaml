@@ -47,6 +47,11 @@ dependencies:
   firebase_storage: ^10.2.15
   file_picker: ^4.5.1
   transparent_image: ^2.0.0
+  flutter_share: ^2.0.0
+  dio: ^4.0.6
+  path_provider: ^2.0.10
+  image_gallery_saver: ^1.7.1
+  permission_handler: ^9.2.0
   # File picker eu não conheço pode ser de terceiros é interessante dar uma pesquisada melhor
 
 dev_dependencies:

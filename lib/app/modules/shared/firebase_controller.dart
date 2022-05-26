@@ -46,11 +46,15 @@ class FirebaseController {
 
   Future<Map<String, dynamic>> getCollectionOfUserById(String userId) async {
     print(userId);
-    return await _firestore.collection('users').doc(userId).get().then((value) async {
+    return await _firestore
+        .collection('users')
+        .doc(userId)
+        .get()
+        .then((value) async {
       Map<String, dynamic> user = value.data()!;
       print(user);
-      if(value.data()?['profile-image-reference'] != null
-          && value.data()?['profile-image-reference'] != ''){
+      if (value.data()?['profile-image-reference'] != null &&
+          value.data()?['profile-image-reference'] != '') {
         await _storage
             .ref(value.data()?['profile-image-reference'] + 'profile')
             .getDownloadURL()
@@ -142,9 +146,11 @@ class FirebaseController {
   }
 
   bool asSaved(String uploadId) {
-    for (final i in _userCollection['saves']) {
-      if (i == uploadId) {
-        return true;
+    if (uploadId != null) {
+      for (final i in _userCollection['saves']) {
+        if (i == uploadId) {
+          return true;
+        }
       }
     }
     return false;
@@ -209,7 +215,6 @@ class FirebaseController {
 
   Future<List<Map<String, dynamic>>> getUploadsFromUserByListOfUploadIds(
       List uploads) async {
-
     List<Map<String, dynamic>>? listUpload = [];
     return await _firestore.collection('uploads').get().then((value) {
       for (String id in uploads) {
@@ -284,8 +289,6 @@ class FirebaseController {
       profileImageUrl = value;
     });
   }
-
-
 
   User? getLoggedUser() {
     return _auth.currentUser;
@@ -430,5 +433,4 @@ class FirebaseController {
     });
     return dataOfFolloweds;
   }
-
 }

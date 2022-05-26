@@ -3,6 +3,7 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:instagram_copy/app/modules/profile/feed/feed_store.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram_copy/app/modules/shared/firebase_controller.dart';
+import 'package:flutter_share/flutter_share.dart';
 
 class FeedPage extends StatefulWidget {
   final String title;
@@ -12,7 +13,7 @@ class FeedPage extends StatefulWidget {
 
   const FeedPage(
       {Key? key,
-      this.title = 'FeedPage',
+      this.title = 'Publicações',
       required this.uploadDocumentId,
       required this.userId, //remover isto
       required this.firebase})
@@ -108,9 +109,9 @@ class FeedPageState extends State<FeedPage> {
                                     ),
                                     IconButton(
                                       onPressed: () {
-                                        print("compartilhar imagem");
+                                        print("Editar/Excluir imagem");
                                       },
-                                      icon: const Icon(Icons.share),
+                                      icon: const Icon(Icons.more_vert),
                                     ),
                                   ],
                                 ),
@@ -140,6 +141,40 @@ class FeedPageState extends State<FeedPage> {
                                       print('Comments');
                                     },
                                     icon: const Icon(Icons.comment),
+                                  ),
+                                  IconButton(
+                                    onPressed: () => showDialog<String>(
+                                      context: context,
+                                      builder: (BuildContext context) =>
+                                          AlertDialog(
+                                        title: const Text(
+                                            'Baixando e compartilhando'),
+                                        content: const Text(
+                                            'Deseja baixar a imagem e compartilha-la em seguida?'),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(
+                                                context, 'Cancelar'),
+                                            child: const Text('Cancelar'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context, 'OK');
+                                            },
+                                            child: const Text('OK'),
+                                          )
+                                        ],
+                                      ),
+                                    ).then(
+                                      (value) {
+                                        if (value == 'OK') {
+                                          downloadAndShare(upload);
+                                          Modular.to.pop();
+                                        }
+                                        ;
+                                      },
+                                    ),
+                                    icon: const Icon(Icons.share),
                                   ),
                                   //icone para multiplas fotos fica por aqui
                                   Spacer(),
@@ -238,7 +273,6 @@ class FeedPageState extends State<FeedPage> {
   }
 
   Widget setImage(String a) {
-    print(a);
     Future<String> futuro = widget.firebase.getUrlFromUploadedImage(a);
     return FutureBuilder(
         future: futuro,
@@ -254,5 +288,14 @@ class FeedPageState extends State<FeedPage> {
             ),
           );
         });
+  }
+
+  void downloadAndShare(Map<String, dynamic> data) {
+    widget.firebase
+        .getUrlFromUploadedImage(data['upload-storage-reference'])
+        .then((value) {
+      print(value);
+      FlutterShare.share(title: 'Olha Isso', linkUrl: value);
+    });
   }
 }
