@@ -290,6 +290,14 @@ class FirebaseController {
     return upload;
   }
 
+  Future<void> updateUploadDescriptionById(
+      String description, String id) async {
+    await _firestore
+        .collection('uploads')
+        .doc(id)
+        .update({'description': description});
+  }
+
   Future<String> getUrlFromUploadedImage(String reference) async {
     return await _storage.ref(reference).getDownloadURL();
   }

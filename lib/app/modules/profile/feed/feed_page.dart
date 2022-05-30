@@ -114,10 +114,15 @@ class FeedPageState extends State<FeedPage> {
                                             onChanged: (String? newValue) {
                                               switch (newValue) {
                                                 case 'Editar':
-                                                  print('Editar');
+                                                  Modular.to.pushNamed(
+                                                      '/post/editor/?upload-id=' +
+                                                          widget
+                                                              .uploadDocumentId
+                                                              .toString(),
+                                                      arguments:
+                                                          widget.firebase);
                                                   break;
                                                 case 'Excluir':
-                                                  print('Excluir');
                                                   widget.firebase.deletePost(
                                                       uploadUser['url'],
                                                       widget.uploadDocumentId
