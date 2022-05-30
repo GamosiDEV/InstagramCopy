@@ -421,8 +421,9 @@ class ProfilePageState extends State<ProfilePage> {
                                       uploadId,
                                   arguments: widget.firebase,
                                 )
-                                    .then((value) {
+                                    .whenComplete(() {
                                   _refresh();
+                                  print('return');
                                 });
                               },
                             );

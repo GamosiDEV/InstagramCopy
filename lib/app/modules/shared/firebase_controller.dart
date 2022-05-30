@@ -87,6 +87,36 @@ class FirebaseController {
     });
   }
 
+  Future<void> deletePost(String uploadUrl, String uploadId) async {
+    String reference = '';
+
+    List savedBy = [];
+    await _firestore.collection('uploads').doc(uploadId).get().then((value) {
+      savedBy = value.data()!['saved-by'];
+      reference = value.data()!['upload-storage-reference'];
+    });
+
+    await _storage.ref(reference).delete();
+
+    await _firestore.collection('uploads').doc(uploadId).delete();
+
+    await _firestore.collection('users').doc(_authUser?.uid).update({
+      'uploads': FieldValue.arrayRemove([uploadId])
+    });
+
+    await _firestore.collection('users').get().then((values) {
+      for (final value in values.docs) {
+        for (final userId in savedBy) {
+          if (value.id == userId) {
+            value.reference.update({
+              'saves': FieldValue.arrayRemove([uploadId])
+            });
+          }
+        }
+      }
+    });
+  }
+
   Future<void> sendSavedPostToFirestore(Map<String, dynamic> data) async {
     await _firestore.collection('saves').add(data).then((value) {
       setSaveToUser(value.id);

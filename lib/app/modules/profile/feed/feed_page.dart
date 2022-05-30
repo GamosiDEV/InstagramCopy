@@ -107,12 +107,36 @@ class FeedPageState extends State<FeedPage> {
                                         ),
                                       ),
                                     ),
-                                    IconButton(
-                                      onPressed: () {
-                                        print("Editar/Excluir imagem");
-                                      },
-                                      icon: const Icon(Icons.more_vert),
-                                    ),
+                                    upload['uploader-id'] ==
+                                            widget.firebase.getAuthUser()?.uid
+                                        ? DropdownButton(
+                                            icon: Icon(Icons.more_vert_sharp),
+                                            onChanged: (String? newValue) {
+                                              switch (newValue) {
+                                                case 'Editar':
+                                                  print('Editar');
+                                                  break;
+                                                case 'Excluir':
+                                                  print('Excluir');
+                                                  widget.firebase.deletePost(
+                                                      uploadUser['url'],
+                                                      widget.uploadDocumentId
+                                                          .toString());
+                                                  Modular.to.pop();
+                                                  break;
+                                              }
+                                            },
+                                            items: <String>['Editar', 'Excluir']
+                                                .map<DropdownMenuItem<String>>(
+                                              (String value) {
+                                                return DropdownMenuItem<String>(
+                                                  value: value,
+                                                  child: Text(value),
+                                                );
+                                              },
+                                            ).toList(),
+                                          )
+                                        : Container(),
                                   ],
                                 ),
                               ),
