@@ -35,9 +35,7 @@ class FeedPageState extends State<FeedPage> {
     super.initState();
     WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
       asSaved = widget.firebase.asSaved(widget.uploadDocumentId.toString());
-      widget.firebase
-          .asLiked(widget.uploadDocumentId.toString())
-          .then((value) => asLiked = value);
+      asLiked = widget.firebase.asLiked(widget.uploadDocumentId.toString());
     });
   }
 

@@ -175,19 +175,8 @@ class FirebaseController {
     getSavedsFromLoggedUser();
   }
 
-  bool asSaved(String uploadId) {
-    if (uploadId != null) {
-      for (final i in _userCollection['saves']) {
-        if (i == uploadId) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   Future<bool> setLikeDatabase(String id) async {
-    return await _firestore
+    var response = await _firestore
         .collection('uploads')
         .doc(id)
         .get()
@@ -199,30 +188,45 @@ class FirebaseController {
             await _firestore.collection('uploads').doc(id).update({
               'liked-by': FieldValue.arrayRemove([_authUser?.uid])
             });
+            await _firestore.collection('users').doc(_authUser?.uid).update({
+              'likes': FieldValue.arrayRemove([id])
+            });
             return false;
           }
         }
         await _firestore.collection('uploads').doc(id).update({
           'liked-by': FieldValue.arrayUnion([_authUser?.uid])
         });
+        await _firestore.collection('users').doc(_authUser?.uid).update({
+          'likes': FieldValue.arrayUnion([id])
+        });
         return true;
       }
       return false;
     });
+    getCollectionOfLoggedUser();
+    return response;
   }
 
-  Future<bool> asLiked(String uploadId) async {
-    await _firestore
-        .collection('uploads')
-        .doc(uploadId)
-        .get()
-        .then((value) async {
-      for (final i in value['liked-by']) {
-        if (_authUser?.uid == i) {
+  bool asSaved(String uploadId) {
+    if (uploadId != null) {
+      for (final i in _userCollection['saves']) {
+        if (i == uploadId) {
           return true;
         }
       }
-    });
+    }
+    return false;
+  }
+
+  bool asLiked(String uploadId) {
+    if (uploadId != null) {
+      for (final i in _userCollection['likes']) {
+        if (i == uploadId) {
+          return true;
+        }
+      }
+    }
     return false;
   }
 
