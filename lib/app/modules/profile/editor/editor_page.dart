@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -26,10 +27,6 @@ class EditorPage extends StatefulWidget {
 class EditorPageState extends State<EditorPage> {
   final EditorStore store = Modular.get();
 
-  //final _auth = FirebaseAuth.instance;
-
-  //late final loggedUser;
-
   TextEditingController fullnameController = TextEditingController();
   TextEditingController usernameController = TextEditingController();
   TextEditingController bioController = TextEditingController();
@@ -40,6 +37,22 @@ class EditorPageState extends State<EditorPage> {
   String profileImageReference = '';
   String profileImagePath = '';
   String profileImageUrl = '';
+  DateTime birth = DateTime.now();
+
+  var mounths = [
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro'
+  ];
 
   Map<String, dynamic>? userData;
 
@@ -75,6 +88,7 @@ class EditorPageState extends State<EditorPage> {
                 ),
                 TextButton(
                   onPressed: () {
+                    Modular.to.pop();
                     Modular.to.pop();
                   },
                   child: const Text('OK'),
@@ -201,6 +215,20 @@ class EditorPageState extends State<EditorPage> {
                 Padding(
                   padding: EdgeInsets.all(8.0),
                   child: TextField(
+                    onTap: () {
+                      showDatePicker(
+                        context: context,
+                        initialDate: birth,
+                        firstDate: DateTime(1850),
+                        lastDate: DateTime.now(),
+                      ).then((value) {
+                        setState(() {
+                          birth = value!;
+                          setBirthDateToController();
+                        });
+                      });
+                    },
+                    readOnly: true,
                     controller: birthController,
                     decoration: InputDecoration(
                       labelText:
@@ -217,7 +245,8 @@ class EditorPageState extends State<EditorPage> {
   }
 
   void getLoggedUser() {
-    userData = widget.firebase.getLoggedUserCollection()?.cast<String, dynamic>() ;
+    userData =
+        widget.firebase.getLoggedUserCollection()?.cast<String, dynamic>();
     setFieldsWithLoggedUser();
   }
 
@@ -227,13 +256,19 @@ class EditorPageState extends State<EditorPage> {
         usernameController.text = userData?['username'];
         if (userData!['fullname'] != null)
           fullnameController.text = userData?['fullname'];
-        if (userData!['genere'] != null) genereController.text = userData?['genere'];
+        if (userData!['genere'] != null)
+          genereController.text = userData?['genere'];
         if (userData!['bio'] != null) bioController.text = userData?['bio'];
-        if (userData!['links'] != null) linksController.text = userData?['links'];
-        if (userData!['birth-date'] != null)
-          birthController.text = userData!['birth-date'];
+        if (userData!['links'] != null)
+          linksController.text = userData?['links'];
+        if (userData!['birth-date'] != null) {
+          birth = userData!['birth-date'].toDate();
+          setBirthDateToController();
+        }
+
         if (userData!['profile-image-reference'] != null) {
-          getUrlFromProfileImage(userData!['profile-image-reference']).then((value) {
+          getUrlFromProfileImage(userData!['profile-image-reference'])
+              .then((value) {
             setState(() {
               profileImageUrl = value;
             });
@@ -260,9 +295,10 @@ class EditorPageState extends State<EditorPage> {
     if (linksController.text != null && linksController.text != '')
       userData?.update('links', (value) => linksController.text);
     if (birthController.text != null && birthController.text != '')
-      userData?.update('birth-date', (value) => birthController.text);
+      userData?.update('birth-date', (value) => Timestamp.fromDate(birth));
     if (profileImageReference != null && profileImageReference != '') {
-      userData?.update('profile-image-reference', (value) => profileImageReference);
+      userData?.update(
+          'profile-image-reference', (value) => profileImageReference);
       uploadSelectedImage();
     }
 
@@ -308,5 +344,13 @@ class EditorPageState extends State<EditorPage> {
       new File(profileImagePath),
       fit: BoxFit.cover,
     );
+  }
+
+  void setBirthDateToController() {
+    birthController.text = birth.day.toString() +
+        " de " +
+        mounths[birth.month - 1] +
+        " de " +
+        birth.year.toString();
   }
 }
