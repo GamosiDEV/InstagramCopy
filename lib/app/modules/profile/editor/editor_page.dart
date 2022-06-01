@@ -11,6 +11,8 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:instagram_copy/app/modules/profile/editor/editor_store.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram_copy/app/modules/shared/firebase_controller.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class EditorPage extends StatefulWidget {
   final String title;

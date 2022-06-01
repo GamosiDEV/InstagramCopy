@@ -11,6 +11,9 @@ import 'package:instagram_copy/app/modules/profile/profile_store.dart';
 import 'package:instagram_copy/app/modules/shared/firebase_controller.dart';
 import 'dart:math' as math;
 
+import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
+
 class ProfilePage extends StatefulWidget {
   final String title;
   final FirebaseController firebase;
@@ -285,7 +288,25 @@ class ProfilePageState extends State<ProfilePage> {
                 Text(
                   user['bio'] != null ? user['bio'] : '',
                   style: TextStyle(fontSize: 16),
-                )
+                ),
+                RichText(
+                  text: TextSpan(children: [
+                    user['links'] != null
+                        ? TextSpan(
+                            text: user['links'].toString(),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () async {
+                                String url = user['links'];
+                                if (!url.startsWith("http://") &&
+                                    !url.startsWith("https://")) {
+                                  url = "http://" + url;
+                                }
+                                await launchUrlString(url,
+                                    mode: LaunchMode.externalApplication);
+                              })
+                        : TextSpan(text: 'Nothing'),
+                  ], style: TextStyle(color: Colors.lightBlue)),
+                ),
               ],
             ),
           ),
