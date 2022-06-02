@@ -7,8 +7,6 @@ import 'package:instagram_copy/app/modules/intro/intro_store.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram_copy/app/modules/shared/firebase_controller.dart';
 
-
-
 class IntroPage extends StatefulWidget {
   final String title;
 
@@ -24,11 +22,8 @@ class IntroPageState extends State<IntroPage> {
 
   @override
   Widget build(BuildContext context) {
-
     Future.delayed(const Duration(milliseconds: 3000), () {
-      setState(() {
-        Modular.to.navigate('/auth/',arguments: firebase);
-      });
+      Modular.to.navigate('/auth/', arguments: firebase);
     });
 
     return Scaffold(
@@ -51,6 +46,4 @@ class IntroPageState extends State<IntroPage> {
       ),
     );
   }
-
-
 }

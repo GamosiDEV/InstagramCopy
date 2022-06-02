@@ -92,7 +92,9 @@ class FirebaseController {
 
     List savedBy = [];
     await _firestore.collection('uploads').doc(uploadId).get().then((value) {
-      savedBy = value.data()!['saved-by'];
+      if (value.data()!['saved-by'] != null && value != null) {
+        savedBy = value.data()!['saved-by'];
+      }
       reference = value.data()!['upload-storage-reference'];
     });
 

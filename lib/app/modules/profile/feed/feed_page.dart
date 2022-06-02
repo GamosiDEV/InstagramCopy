@@ -304,16 +304,19 @@ class FeedPageState extends State<FeedPage> {
     return FutureBuilder(
         future: futuro,
         builder: (context, snapshot) {
-          return Container(
-            height: MediaQuery.of(context).size.height * 0.65,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                fit: BoxFit.fitWidth,
-                alignment: FractionalOffset.center,
-                image: NetworkImage(snapshot.data.toString()),
+          if (snapshot.hasData) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.65,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  fit: BoxFit.fitWidth,
+                  alignment: FractionalOffset.center,
+                  image: NetworkImage(snapshot.data.toString()),
+                ),
               ),
-            ),
-          );
+            );
+          }
+          return progressIndicator();
         });
   }
 
