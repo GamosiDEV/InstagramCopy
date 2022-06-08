@@ -10,6 +10,6 @@ class EditorModule extends Module {
 
   @override
   final List<ModularRoute> routes = [
-    ChildRoute(Modular.initialRoute, child: (_, args) => EditorPage()),
+    ChildRoute(Modular.initialRoute, child: (_, args) => EditorPage(firebase: args.data)),
   ];
 }

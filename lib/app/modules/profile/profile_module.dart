@@ -10,6 +10,10 @@ class ProfileModule extends Module {
 
   @override
   final List<ModularRoute> routes = [
-    ChildRoute(Modular.initialRoute, child: (_, args) => ProfilePage()),
+    ChildRoute(Modular.initialRoute,
+        child: (_, args) => ProfilePage(
+            firebase: args.data,
+            profileUserId: args.queryParams['profileUserId']
+            )),
   ];
 }

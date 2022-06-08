@@ -1,14 +1,26 @@
+import 'dart:ffi';
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_core/firebase_core.dart' as firebase_core;
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:instagram_copy/app/modules/profile/editor/editor_store.dart';
 import 'package:flutter/material.dart';
+import 'package:instagram_copy/app/modules/shared/firebase_controller.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class EditorPage extends StatefulWidget {
   final String title;
+  final FirebaseController firebase;
 
-  const EditorPage({Key? key, this.title = 'EditorPage'}) : super(key: key);
+  const EditorPage(
+      {Key? key, this.title = 'EditorPage', required this.firebase})
+      : super(key: key);
 
   @override
   EditorPageState createState() => EditorPageState();
@@ -16,8 +28,6 @@ class EditorPage extends StatefulWidget {
 
 class EditorPageState extends State<EditorPage> {
   final EditorStore store = Modular.get();
-  final _auth = FirebaseAuth.instance;
-  //late final loggedUser;
 
   TextEditingController fullnameController = TextEditingController();
   TextEditingController usernameController = TextEditingController();
@@ -26,6 +36,27 @@ class EditorPageState extends State<EditorPage> {
   TextEditingController linksController = TextEditingController();
   TextEditingController birthController = TextEditingController();
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  String profileImageReference = '';
+  String profileImagePath = '';
+  String profileImageUrl = '';
+  DateTime birth = DateTime.now();
+
+  var mounths = [
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro'
+  ];
+
+  Map<String, dynamic>? userData;
 
   @override
   void initState() {
@@ -54,11 +85,14 @@ class EditorPageState extends State<EditorPage> {
                   'As alterações feitas em seu perfil não seram salvas, deseja realmente sair ?'),
               actions: <Widget>[
                 TextButton(
-                  onPressed: () => Navigator.pop(context, 'Cancel'),
+                  onPressed: () => Modular.to.pop(),
                   child: const Text('Cancelar'),
                 ),
                 TextButton(
-                  onPressed: () => Navigator.pop(context, 'OK'),
+                  onPressed: () {
+                    Modular.to.pop();
+                    Modular.to.pop();
+                  },
                   child: const Text('OK'),
                 )
               ],
@@ -97,12 +131,11 @@ class EditorPageState extends State<EditorPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: ClipOval(
                     child: SizedBox.fromSize(
-                      size: Size.fromRadius(48),
-                      child: Image.network(
-                        'https://previews.123rf.com/images/happyvector071/happyvector0711904/happyvector071190414608/120957993-creative-illustration-of-default-avatar-profile-placeholder-isolated-on-background-art-design-grey-p.jpg',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+                        size: Size.fromRadius(48),
+                        child:
+                            profileImagePath == null || profileImagePath == ''
+                                ? getCurrentProfileImage()
+                                : getProfileImageSelected()),
                   ),
                 ),
                 Padding(
@@ -113,9 +146,19 @@ class EditorPageState extends State<EditorPage> {
                         text: 'Alterar imagem de Perfil',
                         style: TextStyle(fontSize: 16, color: Colors.lightBlue),
                         recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            print(
-                                'Executar comandos para alterar foto de perfil');
+                          ..onTap = () async {
+                            final image = await FilePicker.platform.pickFiles(
+                              allowMultiple: false,
+                              type: FileType.custom,
+                              allowedExtensions: ['png', 'jpg'],
+                            );
+
+                            if (image == null) {
+                              print('Imagem não selecionada ');
+                              return null;
+                            }
+
+                            setProfileImage(image.files.single.path);
                           }),
                   ),
                 ),
@@ -174,6 +217,20 @@ class EditorPageState extends State<EditorPage> {
                 Padding(
                   padding: EdgeInsets.all(8.0),
                   child: TextField(
+                    onTap: () {
+                      showDatePicker(
+                        context: context,
+                        initialDate: birth,
+                        firstDate: DateTime(1850),
+                        lastDate: DateTime.now(),
+                      ).then((value) {
+                        setState(() {
+                          birth = value!;
+                          setBirthDateToController();
+                        });
+                      });
+                    },
+                    readOnly: true,
                     controller: birthController,
                     decoration: InputDecoration(
                       labelText:
@@ -190,56 +247,112 @@ class EditorPageState extends State<EditorPage> {
   }
 
   void getLoggedUser() {
-    _auth.authStateChanges().listen((user) async {
-      if (user != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get()
-            .then((value) {
-          setFieldsWithLoggedUser(value.data());
-        });
-      }
-    });
+    userData =
+        widget.firebase.getLoggedUserCollection()?.cast<String, dynamic>();
+    setFieldsWithLoggedUser();
   }
 
-  void setFieldsWithLoggedUser(Map? user) {
-    if (user != null) {
+  void setFieldsWithLoggedUser() {
+    if (userData != null) {
       setState(() {
-        usernameController.text = user['username'];
-        if(user['fullname'] != null)
-          fullnameController.text = user['fullname'];
-        if(user['genere'] != null)
-          genereController.text = user['genere'];
-        if(user['bio'] != null)
-          bioController.text = user['bio'];
-        if(user['links'] != null)
-          linksController.text = user['links'];
-        if(user['birth-date'] != null)
-          birthController.text = user['birth-date'];
-        //set image with stored image
+        usernameController.text = userData?['username'];
+        if (userData!['fullname'] != null)
+          fullnameController.text = userData?['fullname'];
+        if (userData!['genere'] != null)
+          genereController.text = userData?['genere'];
+        if (userData!['bio'] != null) bioController.text = userData?['bio'];
+        if (userData!['links'] != null)
+          linksController.text = userData?['links'];
+        if (userData!['birth-date'] != null) {
+          birth = userData!['birth-date'].toDate();
+          setBirthDateToController();
+        }
+
+        if (userData!['profile-image-reference'] != null) {
+          getUrlFromProfileImage(userData!['profile-image-reference'])
+              .then((value) {
+            setState(() {
+              profileImageUrl = value;
+            });
+          });
+        }
       });
     }
   }
 
-  void saveChanges() async {
-    Map<String, dynamic> map = {
-      "username": usernameController.text,
-    };
-    if(fullnameController.text != null && fullnameController.text != '')
-      map.addAll({'fullname': fullnameController.text});
-    if(genereController.text != null && genereController.text != '')
-      map.addAll({'genere': genereController.text});
-    if(bioController.text != null && bioController.text != '')
-      map.addAll({'bio': bioController.text});
-    if(linksController.text != null && linksController.text != '')
-      map.addAll({'links': linksController.text});
-    if(birthController.text != null && birthController.text != '')
-      map.addAll({'birth-date': birthController.text});
+  Future<String> getUrlFromProfileImage(String reference) async {
+    return await FirebaseStorage.instance
+        .ref(reference + 'profile')
+        .getDownloadURL();
+  }
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(_auth.currentUser?.uid)
-        .set(map).whenComplete(() => Modular.to.pop());
+  void saveChanges() async {
+    userData?.update('username', (value) => usernameController.text);
+    if (fullnameController.text != null && fullnameController.text != '')
+      userData?.update('fullname', (value) => fullnameController.text);
+    if (genereController.text != null && genereController.text != '')
+      userData?.update('genere', (value) => genereController.text);
+    if (bioController.text != null && bioController.text != '')
+      userData?.update('bio', (value) => bioController.text);
+    if (linksController.text != null && linksController.text != '')
+      userData?.update('links', (value) => linksController.text);
+    if (birthController.text != null && birthController.text != '')
+      userData?.update('birth-date', (value) => Timestamp.fromDate(birth));
+    if (profileImageReference != null && profileImageReference != '') {
+      userData?.update(
+          'profile-image-reference', (value) => profileImageReference);
+      uploadSelectedImage();
+    }
+
+    widget.firebase.setCollectionOfLoggedUser(userData!);
+    Modular.to.pop();
+  }
+
+  void uploadSelectedImage() async {
+    try {
+      widget.firebase
+          .updateProfileImage(profileImageReference, profileImagePath);
+    } on firebase_core.FirebaseException catch (e) {}
+  }
+
+  void setProfileImage(final path) {
+    setState(() {
+      profileImagePath = path;
+      String? userId = widget.firebase.getLoggedUser()?.uid;
+      profileImageReference = 'users/' + userId! + '/';
+    });
+  }
+
+  Widget getCurrentProfileImage() {
+    if (profileImageUrl != null && profileImageUrl != '') {
+      return Image.network(
+        profileImageUrl,
+        fit: BoxFit.cover,
+      );
+    } else {
+      return getPlaceholder();
+    }
+  }
+
+  Widget getPlaceholder() {
+    return Image.network(
+      'https://previews.123rf.com/images/happyvector071/happyvector0711904/happyvector071190414608/120957993-creative-illustration-of-default-avatar-profile-placeholder-isolated-on-background-art-design-grey-p.jpg',
+      fit: BoxFit.cover,
+    );
+  }
+
+  Widget getProfileImageSelected() {
+    return Image.file(
+      new File(profileImagePath),
+      fit: BoxFit.cover,
+    );
+  }
+
+  void setBirthDateToController() {
+    birthController.text = birth.day.toString() +
+        " de " +
+        mounths[birth.month - 1] +
+        " de " +
+        birth.year.toString();
   }
 }

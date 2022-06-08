@@ -5,11 +5,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:instagram_copy/app/modules/home/home_store.dart';
 import 'package:flutter/material.dart';
+import 'package:instagram_copy/app/modules/shared/firebase_controller.dart';
 
 class HomePage extends StatefulWidget {
+  final FirebaseController firebase;
   final String title;
 
-  const HomePage({Key? key, this.title = 'Instacopy'}) : super(key: key);
+
+  const HomePage({Key? key, this.title = 'Instacopy', required this.firebase})
+      : super(key: key);
 
   @override
   HomePageState createState() => HomePageState();
@@ -18,21 +22,11 @@ class HomePage extends StatefulWidget {
 class HomePageState extends State<HomePage> {
   int _currentIndex = 0;
   final HomeStore store = Modular.get();
-  final _auth = FirebaseAuth.instance;
-  final List<String> pages = <String>[
-    '/home/',
-    '/profile/'
-  ];
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-  }
-
-  @override
-  HomePageState() {
-    print("construtor");
   }
 
   @override
@@ -43,7 +37,7 @@ class HomePageState extends State<HomePage> {
         title: Text(widget.title),
         actions: <Widget>[
           IconButton(
-            onPressed: close,
+            onPressed: onClose,
             icon: const Icon(Icons.exit_to_app),
           )
         ],
@@ -182,21 +176,25 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  void onBottomNavigationBarItemTapped(int index){
+  void onBottomNavigationBarItemTapped(int index) {
     setState(() {
       _currentIndex = index;
     });
     screenChange();
   }
 
-  void screenChange(){
-    Modular.to.navigate(pages[_currentIndex]);//passar codigo da bottomNavigation
+  void screenChange() {
+    String? profilePage = widget.firebase.getAuthUser()?.uid.toString();
+    List<String> pages = <String>['/home/', '/profile/?profileUserId='+profilePage!];
+    Modular.to
+        .navigate(pages[_currentIndex],arguments: widget.firebase); //passar codigo da bottomNavigation
   }
 
-
-  Future<void> close() async {
-    await _auth.signOut().whenComplete(() {
-      Modular.to.navigate('/auth/');
+  Future<void> onClose() async {
+    await widget.firebase.signOut().then((value) {
+      if (value == false) {
+        Modular.to.navigate('/auth/',arguments: widget.firebase);
+      }
     });
   }
 }
