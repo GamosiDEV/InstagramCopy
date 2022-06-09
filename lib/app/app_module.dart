@@ -10,6 +10,7 @@ import 'modules/auth/auth_module.dart';
 import 'modules/home/home_module.dart';
 import 'modules/auth/sign_in/signin_module.dart';
 import 'modules/intro/intro_module.dart';
+import 'modules/profile/feed/commentaries/commentaries_module.dart';
 
 class AppModule extends Module {
   @override
@@ -23,9 +24,10 @@ class AppModule extends Module {
     ModuleRoute('/auth/sign_in/', module: SignInModule()),
     ModuleRoute('/profile/', module: ProfileModule()),
     ModuleRoute('/profile/editor/', module: EditorModule()),
-    ModuleRoute('/profile/feed', module: FeedModule()),
-    ModuleRoute('/profile/follow', module: FollowModule()),
+    ModuleRoute('/profile/feed/commentaries/', module: CommentariesModule()),
+    ModuleRoute('/profile/feed/', module: FeedModule()),
+    ModuleRoute('/profile/follow/', module: FollowModule()),
     ModuleRoute('/post/', module: PostModule()),
-    ModuleRoute('/post/editor', module: PostEditorModule()),
+    ModuleRoute('/post/editor/', module: PostEditorModule()),
   ];
 }

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:instagram_copy/app/modules/profile/feed/feed_store.dart';
 import 'package:flutter/material.dart';
@@ -230,7 +231,25 @@ class FeedPageState extends State<FeedPage> {
                                     Text(uploadUser['username'].toString() +
                                         ' ' +
                                         upload['description'].toString()),
-                                    Text('Ver Comentarios'),
+                                    RichText(
+                                        text: TextSpan(
+                                      text: 'Ver comentarios',
+                                      recognizer: TapGestureRecognizer()
+                                        ..onTap = () {
+                                          Modular.to.pushNamed(
+                                              '/profile/feed/commentaries/',
+                                              arguments: {
+                                                'firebase': widget.firebase,
+                                                'upload-user': uploadUser,
+                                                'upload-data': upload,
+                                                'upload-document-id':
+                                                    widget.uploadDocumentId,
+                                              });
+                                        },
+                                      style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold),
+                                    )),
                                     Row(
                                       children: [
                                         Container(

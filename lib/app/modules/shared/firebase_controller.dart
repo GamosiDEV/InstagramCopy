@@ -477,4 +477,39 @@ class FirebaseController {
     });
     return dataOfFolloweds;
   }
+
+  Future<List<Map<String, dynamic>>> getCommentariesOfUploadByListOfIds(
+      List commentarieIds) async {
+    List<Map<String, dynamic>> commentaries = [];
+
+    for (var id in commentarieIds) {
+      Map<String, dynamic> commentarieData = {};
+      await _firestore
+          .collection('commentaries')
+          .doc(id)
+          .get()
+          .then((value) async {
+        commentarieData.addAll(value.data()!);
+        await _firestore
+            .collection('users')
+            .doc(value.data()!['commented-by'])
+            .get()
+            .then((value) async {
+          await _storage
+              .ref(value.data()!['profile-image-reference'] + 'profile')
+              .getDownloadURL()
+              .then((url) {
+            commentarieData.addAll({
+              'uploader-profile-image-url': url,
+            });
+            commentarieData.addAll({
+              'uploader-username': value.data()!['username'],
+            });
+          });
+        });
+      });
+      commentaries.add(commentarieData);
+    }
+    return commentaries;
+  }
 }
